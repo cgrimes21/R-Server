@@ -7,8 +7,8 @@
 #include "map.h"
 #include "mob.h"
 #include "db.h"
-#include "clif.h"
-#include "sl.h"
+#include "client.h"
+#include "lua_core.h"
 #include "pc.h"
 #include "timer.h"
 #include "db_mysql.h"
@@ -496,7 +496,7 @@ int mob_duratimer(MOB* mob) {
 					mob->da[x].duration = 0;
 					mob->da[x].id = 0;
 					mob->da[x].caster_id = 0;
-					map_foreachinarea(clif_sendanimation, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, mob->da[x].animation, &mob->bl, -1);
+					map_foreachinarea(client_send_animation, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, mob->da[x].animation, &mob->bl, -1);
 					mob->da[x].animation = 0;
 
 					if (tbl != NULL) {
@@ -698,7 +698,7 @@ int mob_flushmagic(MOB* mob) {
 			mob->da[x].duration = 0;
 			mob->da[x].id = 0;
 			mob->da[x].caster_id = 0;
-			map_foreachinarea(clif_sendanimation, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, mob->da[x].animation, &mob->bl, -1);
+			map_foreachinarea(client_send_animation, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, mob->da[x].animation, &mob->bl, -1);
 			mob->da[x].animation = 0;
 
 			if (mob->da[x].caster_id != mob->bl.id) {
@@ -838,7 +838,7 @@ int mobdb_dropitem(unsigned int blockid, unsigned int id, int amount, int dura, 
 
 	if (!def[0]) {
 		map_additem(&fl->bl);
-		map_foreachinarea(clif_object_look_sub2, m, x, y, AREA, BL_PC, LOOK_SEND, &fl->bl);
+		map_foreachinarea(client_object_look_sub2, m, x, y, AREA, BL_PC, LOOK_SEND, &fl->bl);
 	}
 	else {
 		FREE(fl);
@@ -850,7 +850,7 @@ int mob_null(struct block_list* bl, va_list ap) {
 	return 0;
 }
 int kill_mob(MOB* mob) {
-	clif_mob_kill(mob);
+	client_mob_kill(mob);
 	mob_flushmagic(mob);
 	//sl_doscript_blargs(mob->data->yname,"on_death",2,&mob->bl,&sd->bl);
 }
@@ -1266,11 +1266,11 @@ int move_mob(MOB* mob) {
 
 	//if(read_pass(mob->bl.m,dx,dy)) mob->canmove = 1;
 
-	if (clif_object_canmove(m, dx, dy, direction)) {
+	if (client_object_can_move(m, dx, dy, direction)) {
 		mob->canmove = 0;
 		return 0;
 	}
-	if (clif_object_canmove_from(m, backx, backy, direction)) {
+	if (client_object_can_move_from(m, backx, backy, direction)) {
 		mob->canmove = 0;
 		return 0;
 	}
@@ -1306,20 +1306,20 @@ int move_mob(MOB* mob) {
 		//if(x0 || y0) {
 		if (!nothingnew) {
 			if (mob->data->mobtype == 1) {
-				map_foreachinblock(clif_cmoblook_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, mob);
+				map_foreachinblock(client_mob_look_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, mob);
 			}
 			else {
-				//map_foreachinblock(clif_mob_look,mob->bl.m,x0,y0,x0+(x1-1),y0+(y1-1),BL_PC,LOOK_SEND,mob);
-				map_foreachinblock(clif_mob_look_start_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
-				map_foreachinblock(clif_object_look_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, &mob->bl);
-				map_foreachinblock(clif_mob_look_close_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
-				//map_foreachinarea(clif_mob_look,mob->bl.m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
-				//map_foreachinarea(clif_mob_move,m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
+				//map_foreachinblock(client_mob_look,mob->bl.m,x0,y0,x0+(x1-1),y0+(y1-1),BL_PC,LOOK_SEND,mob);
+				map_foreachinblock(client_mob_look_start_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
+				map_foreachinblock(client_object_look_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, &mob->bl);
+				map_foreachinblock(client_mob_look_close_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
+				//map_foreachinarea(client_mob_look,mob->bl.m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
+				//map_foreachinarea(client_mob_move,m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
 			}
 		}
 
 		map_foreachincell(mob_trap_look, m, mob->bl.x, mob->bl.y, BL_NPC, mob, 0, subt);
-		map_foreachinarea(clif_mob_move, m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
+		map_foreachinarea(client_mob_move, m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
 		return 1;
 	}
 	else {
@@ -1452,11 +1452,11 @@ int move_mob_ignore_object(MOB* mob) {
 
 	//if(read_pass(mob->bl.m,dx,dy)) mob->canmove = 1;
 
-	if (clif_object_canmove(m, dx, dy, direction)) {
+	if (client_object_can_move(m, dx, dy, direction)) {
 		mob->canmove = 0;
 		return 0;
 	}
-	if (clif_object_canmove_from(m, backx, backy, direction)) {
+	if (client_object_can_move_from(m, backx, backy, direction)) {
 		mob->canmove = 0;
 		return 0;
 	}
@@ -1494,20 +1494,20 @@ int move_mob_ignore_object(MOB* mob) {
 		//if(x0 || y0) {
 		if (!nothingnew) {
 			if (mob->data->mobtype == 1) {
-				map_foreachinblock(clif_cmoblook_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, mob);
+				map_foreachinblock(client_mob_look_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, mob);
 			}
 			else {
-				//map_foreachinblock(clif_mob_look,mob->bl.m,x0,y0,x0+(x1-1),y0+(y1-1),BL_PC,LOOK_SEND,mob);
-				map_foreachinblock(clif_mob_look_start_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
-				map_foreachinblock(clif_object_look_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, &mob->bl);
-				map_foreachinblock(clif_mob_look_close_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
-				//map_foreachinarea(clif_mob_look,mob->bl.m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
-				//map_foreachinarea(clif_mob_move,m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
+				//map_foreachinblock(client_mob_look,mob->bl.m,x0,y0,x0+(x1-1),y0+(y1-1),BL_PC,LOOK_SEND,mob);
+				map_foreachinblock(client_mob_look_start_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
+				map_foreachinblock(client_object_look_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, &mob->bl);
+				map_foreachinblock(client_mob_look_close_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
+				//map_foreachinarea(client_mob_look,mob->bl.m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
+				//map_foreachinarea(client_mob_move,m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
 			}
 		}
 
 		map_foreachincell(mob_trap_look, m, mob->bl.x, mob->bl.y, BL_NPC, mob, 0, subt);
-		map_foreachinarea(clif_mob_move, m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
+		map_foreachinarea(client_mob_move, m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
 		return 1;
 	}
 	else {
@@ -1651,12 +1651,12 @@ int moveghost_mob(MOB* mob) {
 
 	//if(read_pass(mob->bl.m,dx,dy)) mob->canmove = 1;
 
-	if (clif_object_canmove(m, dx, dy, direction) && mob->target == 0) {
+	if (client_object_can_move(m, dx, dy, direction) && mob->target == 0) {
 		mob->canmove = 0;
 		return 0;
 	}
 
-	if (clif_object_canmove_from(m, backx, backy, direction) && mob->target == 0) {
+	if (client_object_can_move_from(m, backx, backy, direction) && mob->target == 0) {
 		mob->canmove = 0;
 		return 0;
 	}
@@ -1697,20 +1697,20 @@ int moveghost_mob(MOB* mob) {
 		//if(x0 || y0) {
 		if (!nothingnew) {
 			if (mob->data->mobtype == 1) {
-				map_foreachinblock(clif_cmoblook_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, mob);
+				map_foreachinblock(client_mob_look_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, mob);
 			}
 			else {
-				//map_foreachinblock(clif_mob_look,mob->bl.m,x0,y0,x0+(x1-1),y0+(y1-1),BL_PC,LOOK_SEND,mob);
-				map_foreachinblock(clif_mob_look_start_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
-				map_foreachinblock(clif_object_look_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, &mob->bl);
-				map_foreachinblock(clif_mob_look_close_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
-				//map_foreachinarea(clif_mob_look,mob->bl.m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
-				//map_foreachinarea(clif_mob_move,m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
+				//map_foreachinblock(client_mob_look,mob->bl.m,x0,y0,x0+(x1-1),y0+(y1-1),BL_PC,LOOK_SEND,mob);
+				map_foreachinblock(client_mob_look_start_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
+				map_foreachinblock(client_object_look_sub, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, &mob->bl);
+				map_foreachinblock(client_mob_look_close_func, mob->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, mob);
+				//map_foreachinarea(client_mob_look,mob->bl.m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
+				//map_foreachinarea(client_mob_move,m,mob->bl.x,mob->bl.y,CORNER,BL_PC,LOOK_SEND,mob);
 			}
 		}
 
 		map_foreachincell(mob_trap_look, m, mob->bl.x, mob->bl.y, BL_NPC, mob, 0, subt);
-		map_foreachinarea(clif_mob_move, m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
+		map_foreachinarea(client_mob_move, m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
 		return 1;
 	}
 	else {
@@ -1849,7 +1849,7 @@ int mob_respawn_nousers(MOB* mob) {
 	sl_doscript_blargs("on_spawn", NULL, 1, &mob->bl);
 	sl_doscript_blargs(mob->data->yname, "on_spawn", 1, &mob->bl);
 	//map_addblock(&mob->bl);
-	//map_foreachinarea(clif_mob_look,mob->bl.m,mob->bl.x,mob->bl.y,AREA,BL_PC,LOOK_SEND,mob);
+	//map_foreachinarea(client_mob_look,mob->bl.m,mob->bl.x,mob->bl.y,AREA,BL_PC,LOOK_SEND,mob);
 	return 0;
 }
 int mob_respawn(MOB* mob) {
@@ -1864,12 +1864,12 @@ int mob_respawn(MOB* mob) {
 	//map_moveblock(&mob->bl,mob->startx,mob->starty);
 	//map_addblock(&mob->bl);
 	if (mob->data->mobtype == 1) {
-		map_foreachinarea(clif_cmoblook_sub, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
+		map_foreachinarea(client_mob_look_sub, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
 	}
 	else {
-		map_foreachinarea(clif_mob_look_start_func, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC);
-		map_foreachinarea(clif_object_look_sub, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, &mob->bl);
-		map_foreachinarea(clif_mob_look_close_func, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC);
+		map_foreachinarea(client_mob_look_start_func, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC);
+		map_foreachinarea(client_object_look_sub, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, &mob->bl);
+		map_foreachinarea(client_mob_look_close_func, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC);
 	}
 	sl_doscript_blargs("on_spawn", NULL, 1, &mob->bl);
 	sl_doscript_blargs(mob->data->yname, "on_spawn", 1, &mob->bl);
@@ -1982,8 +1982,8 @@ int mob_attack(MOB* mob, int id) {
 	damage = (float) rnd(ac);
 	damage+= (float) min_dam;
 	}
-	//clif_playsound(&mob->bl,9);
-	clif_sendaction(&mob->bl,1,14,9);
+	//client_play_sound(&mob->bl,9);
+	client_send_action(&mob->bl,1,14,9);
 	hit=(35+(mob->data->grace*0.5)-(sd->grace*0.5)+(mob->data->hit*1.5)+(mob->data->level-sd->status.level));
 	if(hit<5) hit=5;
 	if(hit>85) hit=85;
@@ -2046,19 +2046,19 @@ int mob_attack(MOB* mob, int id) {
 		}*/
 		if (sd != NULL) {
 			if (mob->critchance == 1) {
-				clif_send_pc_health(sd, dmg, 33);
+				client_send_pc_health(sd, dmg, 33);
 			}
 			else {
-				clif_send_pc_health(sd, dmg, 255);
+				client_send_pc_health(sd, dmg, 255);
 			}
-			clif_sendstatus(sd, SFLAG_HPMP);
+			client_send_status(sd, SFLAG_HPMP);
 		}
 		else if (tmob != NULL) {
 			if (mob->critchance == 1) {
-				clif_send_mob_health(tmob, dmg, 33);
+				client_send_mob_health(tmob, dmg, 33);
 			}
 			else {
-				clif_send_mob_health(tmob, dmg, 255);
+				client_send_mob_health(tmob, dmg, 255);
 			}
 		}
 
@@ -2166,7 +2166,7 @@ int mob_move2(MOB* mob, int x, int y, int side) {
 		mob->bl.x = x;
 		mob->bl.y = y;
 		//map_addblock(&mob->bl);
-		map_foreachinarea(clif_mob_move, m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
+		map_foreachinarea(client_mob_move, m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
 		mob->canmove = 1;
 	}
 	else {
@@ -2291,7 +2291,7 @@ int move_mob_intent(MOB* mob, struct block_list* bl) {
 		if (mx > px) mob->side = 3;
 		if (my < py) mob->side = 2;
 		if (my > py) mob->side = 0;
-		if (side != mob->side) clif_sendmob_side(mob);
+		if (side != mob->side) client_send_mob_side(mob);
 
 		//mob_attack(mob,sd); //attack the SOB
 		return 1;
@@ -2324,7 +2324,7 @@ int mob_warp(MOB* mob, int m, int x, int y) {
 	nullpo_ret(0, mob);
 	if (mob->bl.id < MOB_START_NUM || mob->bl.id >= NPC_START_NUM) return 0;
 	map_delblock(&mob->bl);
-	clif_lookgone(&mob->bl);
+	client_look_gone(&mob->bl);
 	mob->bl.m = m;
 	mob->bl.x = x;
 	mob->bl.y = y;
@@ -2337,10 +2337,10 @@ int mob_warp(MOB* mob, int m, int x, int y) {
 	//map_moveblock(&mob->bl, mob->bl.x, mob->bl.y);
 
 	if (mob->data->mobtype == 1) {
-		map_foreachinarea(clif_cmoblook_sub, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
+		map_foreachinarea(client_mob_look_sub, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
 	}
 	else {
-		map_foreachinarea(clif_object_look_sub2, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
+		map_foreachinarea(client_object_look_sub2, mob->bl.m, mob->bl.x, mob->bl.y, AREA, BL_PC, LOOK_SEND, mob);
 	}
 	return 0;
 }

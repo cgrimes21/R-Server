@@ -11,7 +11,7 @@
 #include "socket.h"
 #include "strlib.h"
 #include "db_mysql.h"
-#include "sl.h"
+#include "lua_core.h"
 
 DBMap* create_db;
 
@@ -207,7 +207,7 @@ int createdb_start(USER* sd) {
 		fl->amount=sd->creation_itemamount;
 		pc_additem(sd,fl);
 		FREE(fl);
-		clif_sendminitext(sd, "You were successful!");
+		client_send_minitext(sd, "You were successful!");
 	} else {
 		sl_doscript_blargs("onCreation", NULL, 1, &sd->bl);
 	}*/

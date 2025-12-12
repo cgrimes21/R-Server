@@ -17,7 +17,7 @@
 
 #include "../common/malloc.h"
 #include "map.h"
-#include "clif.h"
+#include "client.h"
 #include "pc.h"
 #include "../common/db.h"
 

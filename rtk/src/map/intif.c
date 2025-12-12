@@ -11,7 +11,7 @@
 #include "mmo.h"
 #include "malloc.h"
 #include "pc.h"
-#include "clif.h"
+#include "client.h"
 #include "zlib.h"
 #include "strlib.h"
 #include "db_mysql.h"
@@ -221,20 +221,20 @@ int intif_mmo_tosd(int fd, struct mmo_charstatus* p) {
 	pc_starttimer(sd);
 	pc_requestmp(sd);
 
-	clif_sendack(sd);
-	clif_sendtime(sd);
-	clif_sendid(sd);
-	clif_sendmapinfo(sd);
-	clif_sendstatus(sd, SFLAG_FULLSTATS | SFLAG_HPMP | SFLAG_XPMONEY);
-	clif_mystaytus(sd);
-	clif_spawn(sd);
-	clif_refresh(sd);
-	clif_sendxy(sd);
-	clif_getchararea(sd);
+	client_sendack(sd);
+	client_sendtime(sd);
+	client_sendid(sd);
+	client_sendmapinfo(sd);
+	client_send_status(sd, SFLAG_FULLSTATS | SFLAG_HPMP | SFLAG_XPMONEY);
+	client_my_status(sd);
+	client_spawn(sd);
+	client_refresh(sd);
+	client_send_xy(sd);
+	client_get_char_area(sd);
 
-	clif_mob_look_start(sd);
-	map_foreachinarea(clif_object_look_sub, sd->bl.m, sd->bl.x, sd->bl.y, SAMEAREA, BL_ALL, LOOK_GET, sd);
-	clif_mob_look_close(sd);
+	client_mob_look_start(sd);
+	map_foreachinarea(client_object_look_sub, sd->bl.m, sd->bl.x, sd->bl.y, SAMEAREA, BL_ALL, LOOK_GET, sd);
+	client_mob_look_close(sd);
 
 	pc_loaditem(sd);
 	pc_loadequip(sd);
@@ -261,9 +261,9 @@ int intif_mmo_tosd(int fd, struct mmo_charstatus* p) {
 
 	pc_calcstat(sd);
 	pc_checklevel(sd);
-	clif_mystaytus(sd);
-	map_foreachinarea(clif_updatestate, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
-	clif_retrieveprofile(sd);
+	client_my_status(sd);
+	map_foreachinarea(client_update_state, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
+	client_retrieve_profile(sd);
 	return 0;
 }
 int authdb_init() {
@@ -717,7 +717,7 @@ int intif_parse_findmp(int fd) {
 		if (mailFlags & FLAG_PARCEL)
 			sd->flags |= FLAG_PARCEL;
 
-		clif_sendstatus(sd, SFLAG_XPMONEY);
+		client_send_status(sd, SFLAG_XPMONEY);
 	}
 	return 0;
 }
@@ -735,7 +735,7 @@ int intif_parse_setmp(int fd) {
 
 	sd->flags = flags;
 
-	clif_sendstatus(sd, SFLAG_XPMONEY);
+	client_send_status(sd, SFLAG_XPMONEY);
 	return 0;
 }
 int intif_parse_readpost(int fd) {

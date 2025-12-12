@@ -6,14 +6,14 @@
 #include "mmo.h"
 #include "map.h"
 #include "pc.h"
-#include "clif.h"
+#include "client.h"
 #include "command.h"
 #include "class_db.h"
 #include "itemdb.h"
 #include "board_db.h"
 #include "npc.h"
 #include "magic.h"
-#include "sl.h"
+#include "lua_core.h"
 #include <lauxlib.h>
 #include "mob.h";
 //for debug command
@@ -247,7 +247,7 @@ int command_report(USER* sd, char* line, lua_State* state) {
 	for (x = 1; x < fd_max; x++) {
 		tsd = NULL;
 		if (session[x] && (tsd = (USER*)session[x]->session_data) && !session[x]->eof && tsd->status.gm_level) {
-			clif_sendmsg(tsd, 12, buf);
+			client_send_msg(tsd, 12, buf);
 		}
 	}
 
@@ -271,7 +271,7 @@ int command_gm(USER* sd, char* line, lua_State* state) {
 	for (x = 1; x < fd_max; x++) {
 		tsd = NULL;
 		if (session[x] && (tsd = (USER*)session[x]->session_data) && !session[x]->eof && tsd->status.gm_level) {
-			clif_sendmsg(tsd, 11, buf);
+			client_send_msg(tsd, 11, buf);
 		}
 	}
 
@@ -279,7 +279,7 @@ int command_gm(USER* sd, char* line, lua_State* state) {
 }
 
 int command_transfer(USER* sd, char* line, lua_State* state) {
-	clif_transfer_test(sd, 1, 10, 10);
+	client_transfer_test(sd, 1, 10, 10);
 
 	return 0;
 }
@@ -308,7 +308,7 @@ int command_transfer(USER* sd, char* line, lua_State* state) {
 		if(session[x] && (tsd=(USER*)session[x]->session_data) && !session[x]->eof
 			&& ((tsd->status.class <= 5 && tsd->status.level <= 25) || tsd->status.gm_level > 0
 			|| pc_readglobalreg(tsd, "guide") > 0)) {
-			clif_sendmsg(tsd, 12, buf);
+			client_send_msg(tsd, 12, buf);
 		}
 	}
 
@@ -324,7 +324,7 @@ int command_weather(USER* sd, char* line, lua_State* state) {
 	for (x = 1; x < fd_max; x++) {
 		if (session[x] && (tmpsd = (USER*)session[x]->session_data) && !session[x]->eof) {
 			if (tmpsd->bl.m == sd->bl.m) {
-				clif_sendweather(tmpsd);
+				client_sendweather(tmpsd);
 				//pc_warp(tmpsd,tmpsd->bl.m,tmpsd->bl.x,tmpsd->bl.y);
 			}
 		}
@@ -343,7 +343,7 @@ int command_light(USER* sd, char* line, lua_State* state) {
 		if (session[x] && (tmpsd = (USER*)session[x]->session_data) && !session[x]->eof) {
 			if (tmpsd->bl.m == sd->bl.m) {
 				pc_warp(tmpsd, tmpsd->bl.m, tmpsd->bl.x, tmpsd->bl.y);
-				//clif_sendmapinfo(sd);
+				//client_sendmapinfo(sd);
 			}
 		}
 	}
@@ -387,14 +387,14 @@ int is_command(USER* sd, const char* p, int len) {
 
 int command_shutdowncancel(USER* sd, char* line, lua_State* state) {
 	if (downtimer) {
-		clif_broadcast("---------------------------------------------------", -1);
-		clif_broadcast("Server shutdown cancelled.", -1);
-		clif_broadcast("---------------------------------------------------", -1);
+		client_broadcast("---------------------------------------------------", -1);
+		client_broadcast("Server shutdown cancelled.", -1);
+		client_broadcast("---------------------------------------------------", -1);
 		downtimer = 0;
 		timer_remove(map_reset_timer);
 	}
 	else {
-		clif_sendminitext(sd, "Server is not shutting down.");
+		client_send_minitext(sd, "Server is not shutting down.");
 	}
 
 	return 0;
@@ -423,17 +423,17 @@ int command_shutdown(USER* sd, char* line, lua_State* state) {
 
 		if (t_time >= 60000) {
 			sprintf(msg, "RetroTK! Reset in %d minutes.", t_time / 60000);
-			clif_broadcast("---------------------------------------------------", -1);
-			clif_broadcast(msg, -1);
-			clif_broadcast("---------------------------------------------------", -1);
+			client_broadcast("---------------------------------------------------", -1);
+			client_broadcast(msg, -1);
+			client_broadcast("---------------------------------------------------", -1);
 			d = t_time / 60000;
 			t_time = d * 60000;
 		}
 		else {
 			sprintf(msg, "RetroTK! Reset in %d seconds.", t_time / 1000);
-			clif_broadcast("---------------------------------------------------", -1);
-			clif_broadcast(msg, -1);
-			clif_broadcast("---------------------------------------------------", -1);
+			client_broadcast("---------------------------------------------------", -1);
+			client_broadcast(msg, -1);
+			client_broadcast("---------------------------------------------------", -1);
 			d = t_time / 1000;
 			t_time = d * 1000;
 		}
@@ -441,7 +441,7 @@ int command_shutdown(USER* sd, char* line, lua_State* state) {
 		downtimer = timer_insert(250, 250, map_reset_timer, t_time, 250);
 	}
 	else {
-		clif_sendminitext(sd, "Server is already shutting down.");
+		client_send_minitext(sd, "Server is already shutting down.");
 	}
 
 	return 0;
@@ -450,13 +450,13 @@ int command_luareload(USER* sd, char* line, lua_State* state) {
 	int errors = sl_reload(state);
 
 	nullpo_ret(errors, sd);
-	clif_sendminitext(sd, "LUA Scripts reloaded!");
+	client_send_minitext(sd, "LUA Scripts reloaded!");
 	return errors;
 }
 int command_magicreload(USER* sd, char* line, lua_State* state) {
 	magicdb_read();
 	nullpo_ret(0, sd);
-	clif_sendminitext(sd, "Magic DB reloaded!");
+	client_send_minitext(sd, "Magic DB reloaded!");
 	return 0;
 }
 int command_lua(USER* sd, char* line, lua_State* state) {
@@ -485,25 +485,25 @@ int command_blockcount(USER* sd, char* line, lua_State* state) {
 int command_stealth(USER* sd, char* line, lua_State* state) {
 	if (sd->optFlags & optFlag_stealth) {
 		sd->optFlags ^= optFlag_stealth;
-		clif_refresh(sd);
-		clif_sendminitext(sd, "Stealth :OFF");
+		client_refresh(sd);
+		client_send_minitext(sd, "Stealth :OFF");
 	}
 	else {
-		clif_lookgone(&sd->bl);
+		client_look_gone(&sd->bl);
 		sd->optFlags ^= optFlag_stealth;
-		clif_refresh(sd);
-		clif_sendminitext(sd, "Stealth :ON");
+		client_refresh(sd);
+		client_send_minitext(sd, "Stealth :ON");
 	}
 }
 
 int command_ghosts(USER* sd, char* line, lua_State* state) {
 	sd->optFlags ^= optFlag_ghosts;
-	clif_refresh(sd);
+	client_refresh(sd);
 
 	if (sd->optFlags & optFlag_ghosts)
-		clif_sendminitext(sd, "Ghosts :ON");
+		client_send_minitext(sd, "Ghosts :ON");
 	else
-		clif_sendminitext(sd, "Ghosts :OFF");
+		client_send_minitext(sd, "Ghosts :OFF");
 
 	return 0;
 }
@@ -512,10 +512,10 @@ int command_unphysical(USER* sd, char* line, lua_State* state) {
 	sd->uFlags ^= uFlag_unphysical;
 
 	if (sd->uFlags & uFlag_unphysical) {
-		clif_sendminitext(sd, "Unphysical :ON");
+		client_send_minitext(sd, "Unphysical :ON");
 	}
 	else {
-		clif_sendminitext(sd, "Unphysical :OFF");
+		client_send_minitext(sd, "Unphysical :OFF");
 	}
 }
 
@@ -523,10 +523,10 @@ int command_immortality(USER* sd, char* line, lua_State* state) {
 	sd->uFlags ^= uFlag_immortal;
 
 	if (sd->uFlags & uFlag_immortal) {
-		clif_sendminitext(sd, "Immortality :ON");
+		client_send_minitext(sd, "Immortality :ON");
 	}
 	else {
-		clif_sendminitext(sd, "Immortality :OFF");
+		client_send_minitext(sd, "Immortality :OFF");
 	}
 }
 
@@ -579,16 +579,16 @@ int command_silence(USER* sd, char* line, lua_State* state) {
 		tsd->uFlags ^= uFlag_silenced;
 
 		if (tsd->uFlags & uFlag_silenced) {
-			clif_sendminitext(sd, "Silenced.");
-			clif_sendminitext(tsd, "You have been silenced.");
+			client_send_minitext(sd, "Silenced.");
+			client_send_minitext(tsd, "You have been silenced.");
 		}
 		else {
-			clif_sendminitext(sd, "Unsilenced.");
-			clif_sendminitext(tsd, "Silence lifted.");
+			client_send_minitext(sd, "Unsilenced.");
+			client_send_minitext(tsd, "Silence lifted.");
 		}
 	}
 	else
-		clif_sendminitext(sd, "User not on.");
+		client_send_minitext(sd, "User not on.");
 }
 
 int command_gfxtoggle(USER* sd, char* line, lua_State* state) {
@@ -603,11 +603,11 @@ int command_disguise(USER* sd, char* line, lua_State* state) {
 		return -1;
 	os = sd->status.state;
 	sd->status.state = 0;
-	map_foreachinarea(clif_updatestate, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
+	map_foreachinarea(client_update_state, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
 	sd->status.state = os;
 	sd->disguise = d;
 	sd->disguise_color = e;
-	map_foreachinarea(clif_updatestate, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
+	map_foreachinarea(client_update_state, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
 
 	return 0;
 }
@@ -625,7 +625,7 @@ int command_broadcast(USER* sd, char* line, lua_State* state) {
 		SqlStmt_ShowDebug(sql_handle);
 	}*/
 
-	clif_broadcast(buf, -1);
+	client_broadcast(buf, -1);
 	return 0;
 }
 int command_speed(USER* sd, char* line, lua_State* state) {
@@ -633,8 +633,8 @@ int command_speed(USER* sd, char* line, lua_State* state) {
 	if (sscanf(line, "%d", &d) < 1) return -1;
 
 	sd->speed = d;
-	clif_sendchararea(sd);
-	clif_getchararea(sd);
+	client_send_char_area(sd);
+	client_get_char_area(sd);
 }
 int command_warp(USER* sd, char* line, lua_State* state) {
 	int m, x, y;
@@ -653,7 +653,7 @@ int command_pvp(USER* sd, char* line, lua_State* state) {
 	}
 
 	sprintf(msg, "PvP set to: %d", pvp);
-	clif_sendminitext(sd, msg);
+	client_send_minitext(sd, msg);
 	map[sd->bl.m].pvp = pvp;
 	return 0;
 }
@@ -680,7 +680,7 @@ int command_kc(USER* sd, char* line, lua_State* state) {
 
 	for (x = 0; x < MAX_KILLREG; x++) {
 		sprintf(buf, "%d (%d)", sd->status.killreg[x].mob_id, sd->status.killreg[x].amount);
-		clif_sendminitext(sd, buf);
+		client_send_minitext(sd, buf);
 	}
 	return 0;
 }
@@ -769,37 +769,37 @@ int command_spell(USER* sd, char* line, lua_State* state) {
 	if (sscanf(line, "%d %d", &spell, &sound) > -1) {
 		spellgfx = spell;
 		soundfx = sound;
-		map_foreachinarea(clif_sendanimation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, spellgfx, &sd->bl, soundfx);
-		clif_playsound(&sd->bl, sound);
+		map_foreachinarea(client_send_animation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, spellgfx, &sd->bl, soundfx);
+		client_play_sound(&sd->bl, sound);
 	}
 	else {
-		map_foreachinarea(clif_sendanimation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, spellgfx, &sd->bl, soundfx);
+		map_foreachinarea(client_send_animation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, spellgfx, &sd->bl, soundfx);
 	}
 
-	//map_foreachinarea(clif_sendanimation,sd->bl.m,sd->bl.x,sd->bl.y,AREA,BL_PC,spellgfx,&sd->bl,soundfx);
-	//clif_playsound(&sd->bl,sound);
+	//map_foreachinarea(client_send_animation,sd->bl.m,sd->bl.x,sd->bl.y,AREA,BL_PC,spellgfx,&sd->bl,soundfx);
+	//client_play_sound(&sd->bl,sound);
 	//run_script(magicdb_script(spell),0,sd->bl.id,0);
-	//clif_sendanimation(sd,spell);
+	//client_send_animation(sd,spell);
 	return 0;
 }
 
 int command_nspell(USER* sd, char* line, lua_State* state) {
 	spellgfx += 1;
 	if (spellgfx > 427) spellgfx = 427;
-	map_foreachinarea(clif_sendanimation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, spellgfx, &sd->bl, soundfx);
+	map_foreachinarea(client_send_animation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, spellgfx, &sd->bl, soundfx);
 }
 
 int command_pspell(USER* sd, char* line, lua_State* state) {
 	spellgfx -= 1;
 	if (spellgfx < 0) spellgfx = 0;
-	map_foreachinarea(clif_sendanimation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, spellgfx, &sd->bl, soundfx);
+	map_foreachinarea(client_send_animation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, spellgfx, &sd->bl, soundfx);
 }
 
 int command_spellq(USER* sd, char* line, lua_State* state) {
 	char mini[25];
 
 	sprintf(mini, "Current Spell is: %d\0", spellgfx);
-	clif_sendminitext(sd, mini);
+	client_send_minitext(sd, mini);
 }
 
 int command_hair(USER* sd, char* line, lua_State* state) {
@@ -810,8 +810,8 @@ int command_hair(USER* sd, char* line, lua_State* state) {
 
 	sd->status.hair = hair;
 	sd->status.hair_color = hair_color;
-	clif_sendchararea(sd);
-	clif_getchararea(sd);
+	client_send_char_area(sd);
+	client_get_char_area(sd);
 	return 0;
 }
 int command_checkdupes(USER* sd, char* line, lua_State* state) {
@@ -820,7 +820,7 @@ int command_checkdupes(USER* sd, char* line, lua_State* state) {
 	int blen;
 	int x;
 	blen = sprintf(BufStr, "longest eof = %ims", Last_Eof);
-	clif_sendminitext(sd, BufStr);
+	client_send_minitext(sd, BufStr);
 
 	for (x = 1; x < fd_max; x++) {
 		if (session[x] && (tmpsd = session[x]->session_data) && !session[x]->eof) {
@@ -828,7 +828,7 @@ int command_checkdupes(USER* sd, char* line, lua_State* state) {
 			if (numDupes)
 			{
 				blen = sprintf(BufStr, "%s gold bar %i times", tmpsd->status.name, numDupes);
-				clif_sendminitext(sd, BufStr);
+				client_send_minitext(sd, BufStr);
 			}
 		}
 	}
@@ -848,7 +848,7 @@ int command_checkwpe(USER* sd, char* line, lua_State* state) {
 			if (numDupes)
 			{
 				blen = sprintf(BufStr, "%s WPE attempt %i times", tmpsd->status.name, numDupes);
-				clif_sendminitext(sd, BufStr);
+				client_send_minitext(sd, BufStr);
 			}
 		}
 	}
@@ -866,12 +866,12 @@ int command_kill(USER* sd, char* line, lua_State* state) {
 		len = sprintf(buf, "Done.");
 
 		if (session[tsd->fd])session[tsd->fd]->eof = 1;
-		clif_sendminitext(sd, buf);
+		client_send_minitext(sd, buf);
 	}
 	else
 	{
 		len = sprintf(buf, "User not found.");
-		clif_sendminitext(sd, buf);
+		client_send_minitext(sd, buf);
 	}
 
 	return 0;
@@ -894,7 +894,7 @@ int command_killall(USER* sd, char* line, lua_State* state) {
 
 	//int len = sprintf(buf,"All but GMs have been mass booted.");
 	if (!session[sd->fd]->eof)
-		clif_sendminitext(sd, "All but GMs have been mass booted.");
+		client_send_minitext(sd, "All but GMs have been mass booted.");
 
 	return 0;
 }
@@ -905,8 +905,8 @@ int command_side(USER* sd, char* line, lua_State* state) {
 		return -1;
 
 	sd->status.side = side;
-	clif_sendchararea(sd);
-	clif_getchararea(sd);
+	client_send_char_area(sd);
+	client_get_char_area(sd);
 	return 0;
 }
 int command_state(USER* sd, char* line, lua_State* lstate) {
@@ -918,10 +918,10 @@ int command_state(USER* sd, char* line, lua_State* lstate) {
 	}
 	else {
 		sd->status.state = state % 5;
-		map_foreachinarea(clif_updatestate, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
+		map_foreachinarea(client_update_state, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
 	}
-	//clif_sendchararea(sd); // was commented
-	//clif_getchararea(sd); // was commented
+	//client_send_char_area(sd); // was commented
+	//client_get_char_area(sd); // was commented
 	return 0;
 }
 int command_armorcolor(USER* sd, char* line, lua_State* state) {
@@ -930,8 +930,8 @@ int command_armorcolor(USER* sd, char* line, lua_State* state) {
 		return -1;
 
 	sd->status.armor_color = armorcolor;
-	clif_sendchararea(sd);
-	clif_getchararea(sd);
+	client_send_char_area(sd);
+	client_get_char_area(sd);
 	return 0;
 }
 
@@ -979,9 +979,9 @@ int command_val(USER* sd, char* line, lua_State* state) {
 	char buf[255];
 	memset(buf, 0, 255);
 	sprintf(buf, "Mob spawn count: %d", MOB_SPAWN_MAX - MOB_SPAWN_START + MOB_ONETIME_MAX - MOB_ONETIME_START);
-	clif_sendminitext(sd, buf);
+	client_send_minitext(sd, buf);
 
-	//clif_sendminitext(Mob Spawn count: %d\n",MOB_SPAWN_MAX-MOB_SPAWN_START);
+	//client_send_minitext(Mob Spawn count: %d\n",MOB_SPAWN_MAX-MOB_SPAWN_START);
 	//sd->status.guide[val1]=valval;
 	/*WFIFOB(sd->fd,0)=0xAA;
 	WFIFOW(sd->fd,1)=SWAP16(0x07);
@@ -995,13 +995,13 @@ int command_val(USER* sd, char* line, lua_State* state) {
 	encrypt(WFIFOP(sd->fd,0));
 	WFIFOSET(sd->fd,10);*/
 
-	//clif_sendstatus3(sd);
+	//client_send_status3(sd);
 	//sd->val[val]=valval;
 	//pc_warp(sd,sd->bl.m,sd->bl.x,sd->bl.y);
-	//clif_sendmapinfo(sd);
-	//clif_sendstatus2(sd);
-	//clif_sendchararea(sd);
-	//clif_getchararea(sd);
+	//client_sendmapinfo(sd);
+	//client_send_status2(sd);
+	//client_send_char_area(sd);
+	//client_get_char_area(sd);
 	return 0;
 }
 
@@ -1027,7 +1027,7 @@ int command_xprate(USER* sd, char* line, lua_State* state) {
 		return -1;
 
 	len = sprintf(buf, "Experience rate: %ux", rate);
-	clif_sendminitext(sd, buf);
+	client_send_minitext(sd, buf);
 	xp_rate = rate;
 
 	return 0;
@@ -1041,7 +1041,7 @@ int command_drate(USER* sd, char* line, lua_State* state) {
 		return -1;
 
 	len = sprintf(buf, "Drop rate: %u x", rate);
-	clif_sendminitext(sd, buf);
+	client_send_minitext(sd, buf);
 	d_rate = rate;
 	return 0;
 }
@@ -1050,14 +1050,14 @@ int command_who(USER* sd, char* line, lua_State* state) {
 	char buf[256];
 
 	len = sprintf(buf, "There are %d users online.", userlist.user_count);
-	clif_sendminitext(sd, buf);
+	client_send_minitext(sd, buf);
 	return 0;
 }
 
 int command_heal(USER* sd, char* line, lua_State* state) {
 	sd->status.hp = sd->max_hp;
 	sd->status.mp = sd->max_mp;
-	clif_sendstatus(sd, SFLAG_HPMP);
+	client_send_status(sd, SFLAG_HPMP);
 	return 0;
 }
 int command_level(USER* sd, char* line, lua_State* state) {
@@ -1066,7 +1066,7 @@ int command_level(USER* sd, char* line, lua_State* state) {
 		return -1;
 
 	sd->status.level = level;
-	clif_sendstatus(sd, SFLAG_FULLSTATS);
+	client_send_status(sd, SFLAG_FULLSTATS);
 	return 0;
 }
 /*int command_mon(USER *sd, char *line,lua_State* state) {
@@ -1080,7 +1080,7 @@ int command_level(USER* sd, char* line, lua_State* state) {
 
 	map_addmob(sd, id, start, end, replace);
 	mobspawn_onetime(id, sd->bl.m, sd->bl.x, sd->bl.y, 0, start, end, replace);
-	clif_sendminitext(sd,"One time monster spawn added!");
+	client_send_minitext(sd,"One time monster spawn added!");
 	return 0;
 }*/
 
@@ -1097,25 +1097,25 @@ int command_level(USER* sd, char* line, lua_State* state) {
 		rand = rnd(num) + 1;
 
 	sprintf(msg, "%s rolled a %d out of %d", sd->status.name, rand, num);
-	map_foreachinarea(clif_broadcast_sub, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, msg);
+	map_foreachinarea(client_broadcast_sub, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, msg);
 	return 0;
 }*/
 int command_reloadmob(USER* sd, char* line, lua_State* state) {
 	mobdb_read("nothing");
 	nullpo_ret(0, sd);
-	clif_sendminitext(sd, "Mob DB Reloaded");
+	client_send_minitext(sd, "Mob DB Reloaded");
 	return 0;
 }
 int command_reloadspawn(USER* sd, char* line, lua_State* state) {
 	mobspawn_read("nothing");
 	nullpo_ret(0, sd);
-	clif_sendminitext(sd, "Spawn DB Reloaded");
+	client_send_minitext(sd, "Spawn DB Reloaded");
 	return 0;
 }
 int command_reloaditem(USER* sd, char* line, lua_State* state) {
 	itemdb_read();
 	nullpo_ret(0, sd);
-	clif_sendminitext(sd, "Item DB Reloaded!");
+	client_send_minitext(sd, "Item DB Reloaded!");
 	return 0;
 }
 int command_randomspawn(USER* sd, char* line, lua_State* state) {
@@ -1150,7 +1150,7 @@ int command_randomspawn(USER* sd, char* line, lua_State* state) {
 	}
 
 	//z=sprintf(buf,"Added %d spawns.",times);
-	//clif_sendbluemessage(sd,buf,z);
+	//client_send_blue_message(sd,buf,z);
 	*/
 	return 0;
 }
@@ -1162,8 +1162,8 @@ int command_weap(USER* sd, char* line, lua_State* state) {
 
 	sd->gfx.weapon = id;
 	sd->gfx.cweapon = color;
-	clif_getchararea(sd);
-	clif_sendchararea(sd);
+	client_get_char_area(sd);
+	client_send_char_area(sd);
 	return 0;
 }
 int command_url(USER* sd, char* line, lua_State* state) {
@@ -1179,7 +1179,7 @@ int command_url(USER* sd, char* line, lua_State* state) {
 	if (!tsd)
 		return -1;
 
-	clif_sendurl(tsd, type, url);
+	client_sendurl(tsd, type, url);
 	return 0;
 }
 int command_armor(USER* sd, char* line, lua_State* state) {
@@ -1190,8 +1190,8 @@ int command_armor(USER* sd, char* line, lua_State* state) {
 
 	sd->gfx.armor = id;
 	sd->gfx.carmor = color;
-	clif_getchararea(sd);
-	clif_sendchararea(sd);
+	client_get_char_area(sd);
+	client_send_char_area(sd);
 	return 0;
 }
 int command_shield(USER* sd, char* line, lua_State* state) {
@@ -1202,8 +1202,8 @@ int command_shield(USER* sd, char* line, lua_State* state) {
 
 	sd->gfx.shield = id;
 	sd->gfx.cshield = color;
-	clif_getchararea(sd);
-	clif_sendchararea(sd);
+	client_get_char_area(sd);
+	client_send_char_area(sd);
 	return 0;
 }
 int command_faceacc(USER* sd, char* line, lua_State* state) {
@@ -1214,8 +1214,8 @@ int command_faceacc(USER* sd, char* line, lua_State* state) {
 
 	sd->gfx.faceAcc = id;
 	sd->gfx.cfaceAcc = color;
-	clif_getchararea(sd);
-	clif_sendchararea(sd);
+	client_get_char_area(sd);
+	client_send_char_area(sd);
 	return 0;
 }
 int command_crown(USER* sd, char* line, lua_State* state) {
@@ -1226,8 +1226,8 @@ int command_crown(USER* sd, char* line, lua_State* state) {
 
 	sd->gfx.crown = id;
 	sd->gfx.ccrown = color;
-	clif_getchararea(sd);
-	clif_sendchararea(sd);
+	client_get_char_area(sd);
+	client_send_char_area(sd);
 	return 0;
 }
 int command_necklace(USER* sd, char* line, lua_State* state) {
@@ -1237,8 +1237,8 @@ int command_necklace(USER* sd, char* line, lua_State* state) {
 		return -1;
 	sd->gfx.necklace = id;
 	sd->gfx.cnecklace = color;
-	clif_getchararea(sd);
-	clif_sendchararea(sd);
+	client_get_char_area(sd);
+	client_send_char_area(sd);
 	return 0;
 }
 int command_mantle(USER* sd, char* line, lua_State* state) {
@@ -1248,8 +1248,8 @@ int command_mantle(USER* sd, char* line, lua_State* state) {
 		return -1;
 	sd->gfx.mantle = id;
 	sd->gfx.cmantle = color;
-	clif_getchararea(sd);
-	clif_sendchararea(sd);
+	client_get_char_area(sd);
+	client_send_char_area(sd);
 	return 0;
 }
 int command_boots(USER* sd, char* line, lua_State* state) {
@@ -1260,8 +1260,8 @@ int command_boots(USER* sd, char* line, lua_State* state) {
 
 	sd->gfx.boots = id;
 	sd->gfx.cboots = color;
-	clif_getchararea(sd);
-	clif_sendchararea(sd);
+	client_get_char_area(sd);
+	client_send_char_area(sd);
 	return 0;
 }
 int command_helm(USER* sd, char* line, lua_State* state) {
@@ -1273,8 +1273,8 @@ int command_helm(USER* sd, char* line, lua_State* state) {
 
 	sd->gfx.helm = id;
 	sd->gfx.chelm = color;
-	clif_getchararea(sd);
-	clif_sendchararea(sd);
+	client_get_char_area(sd);
+	client_send_char_area(sd);
 	return 0;
 }
 int command_cinv(USER* sd, char* line, lua_State* state) {
@@ -1341,7 +1341,7 @@ int command_cfloor(USER* sd, char* line, lua_State* state) {
 					blocks++;
 					if(bl->type == BL_ITEM && bl->x>=x0 && bl->x<=x1 && bl->y>=y0 && bl->y<=y1 && blocks<32768) {
 						fl=(FLOORITEM*)map_id2bl((unsigned int)bl->id);
-						clif_lookgone(&fl->bl);
+						client_look_gone(&fl->bl);
 						map_delitem(fl->bl.id);
 					}
 				}
@@ -1355,7 +1355,7 @@ int command_cfloor(USER* sd, char* line, lua_State* state) {
 			blocks++;
 			if(bl->type==BL_ITEM && bl->x==sd->bl.x && bl->y==sd->bl.y && blocks<32768) {
 				fl=(FLOORITEM*)map_id2bl((unsigned int)bl->id);
-				clif_lookgone(&fl->bl);
+				client_look_gone(&fl->bl);
 				map_delitem(fl->bl.id);
 			}
 		}
@@ -1421,7 +1421,7 @@ int command_job(USER* sd, char* line, lua_State* state) {
 		return 0;
 	}
 
-	clif_mystaytus(sd);
+	client_my_status(sd);
 	return 0;
 }
 
@@ -1472,7 +1472,7 @@ int command_musicq(USER* sd, char* line, lua_State* state) {
 	char mini[25];
 
 	sprintf(mini, "Current music is: %d\0", musicfx);
-	clif_sendminitext(sd, mini);
+	client_send_minitext(sd, mini);
 	return 0;
 }
 
@@ -1481,10 +1481,10 @@ int command_sound(USER* sd, char* line, lua_State* state) {
 
 	if (sscanf(line, "%d", &sound) > -1) {
 		soundfx = sound;
-		clif_playsound(sd, soundfx);
+		client_play_sound(sd, soundfx);
 	}
 	else {
-		clif_playsound(sd, soundfx);
+		client_play_sound(sd, soundfx);
 	}
 
 	return 0;
@@ -1493,14 +1493,14 @@ int command_sound(USER* sd, char* line, lua_State* state) {
 int command_nsound(USER* sd, char* line, lua_State* state) {
 	soundfx += 1;
 	if (soundfx > 125) soundfx = 125;
-	clif_playsound(sd, soundfx);
+	client_play_sound(sd, soundfx);
 	return 0;
 }
 
 int command_psound(USER* sd, char* line, lua_State* state) {
 	soundfx -= 1;
 	if (soundfx < 0) soundfx = 0;
-	clif_playsound(sd, soundfx);
+	client_play_sound(sd, soundfx);
 	return 0;
 }
 
@@ -1508,7 +1508,7 @@ int command_soundq(USER* sd, char* line, lua_State* state) {
 	char mini[25];
 
 	sprintf(mini, "Current sound is: %d\0", soundfx);
-	clif_sendminitext(sd, mini);
+	client_send_minitext(sd, mini);
 	return 0;
 }
 
@@ -1517,7 +1517,7 @@ int command_reloadboard(USER* sd, char* line, lua_State* state) {
 	boarddb_init();
 
 	nullpo_ret(0, sd);
-	clif_sendminitext(sd, "Board DB reloaded!");
+	client_send_minitext(sd, "Board DB reloaded!");
 	return 0;
 }
 
@@ -1525,7 +1525,7 @@ int command_reloadclan(USER* sd, char* line, lua_State* state) {
 	clandb_init();
 
 	nullpo_ret(0, sd);
-	clif_sendminitext(sd, "Clan DB reloaded!");
+	client_send_minitext(sd, "Clan DB reloaded!");
 	return 0;
 }
 
@@ -1551,12 +1551,12 @@ int command_reloadclan(USER* sd, char* line, lua_State* state) {
 	}
 
 	numid = SqlStmt_NumRows(stmt);
-	clif_sendminitext(sd, "----------------");
+	client_send_minitext(sd, "----------------");
 
 	for (x = 0; x < numid && SQL_SUCCESS == SqlStmt_NextRow(stmt); x++) {
 		USER* tsd = map_id2sd(idlist);
 		sprintf(name,"%s\a\0", tsd->status.name);
-		clif_sendminitext(sd, name);
+		client_send_minitext(sd, name);
 	}
 
 	SqlStmt_Free(stmt);
@@ -1566,27 +1566,27 @@ int command_reloadclan(USER* sd, char* line, lua_State* state) {
 int command_reloadnpc(USER* sd, char* line, lua_State* state) {
 	npc_init();
 	nullpo_ret(0, sd);
-	clif_sendminitext(sd, "NPC DB reloaded!");
+	client_send_minitext(sd, "NPC DB reloaded!");
 	return 0;
 }
 
 /*int command_metan(USER *sd, char *line) {
 	metan_main();
-	clif_sendminitext(sd,"Metan Complete!");
+	client_send_minitext(sd,"Metan Complete!");
 	return 0;
 }*/
 
 /*int command_reloadrecipe(USER *sd, char *line) {
 	recipedb_term();
 	recipedb_init();
-	clif_sendminitext(sd, "Recipe DB reloaded!");
+	client_send_minitext(sd, "Recipe DB reloaded!");
 	return 0;
 }*/
 
 int command_reloadcreations(USER* sd, char* line, lua_State* state) {
 	createdb_term();
 	createdb_init();
-	clif_sendminitext(sd, "Creations DB reloaded!");
+	client_send_minitext(sd, "Creations DB reloaded!");
 	return 0;
 }
 
@@ -1616,7 +1616,7 @@ int command_reloadmaps(USER* sd, char* line, lua_State* state) {
 	}
 
 	nullpo_ret(0, sd);
-	clif_sendminitext(sd, "Maps reloaded!");
+	client_send_minitext(sd, "Maps reloaded!");
 	return 0;
 }
 
@@ -1624,7 +1624,7 @@ int command_reloadclass(USER* sd, char* line, lua_State* state) {
 	classdb_read();
 
 	nullpo_ret(0, sd);
-	clif_sendminitext(sd, "Classes reloaded!");
+	client_send_minitext(sd, "Classes reloaded!");
 	return 0;
 }
 
@@ -1632,14 +1632,14 @@ int command_reloadlevels(USER* sd, char* line, lua_State* state) {
 	leveldb_read(LEVELDB_FILE);
 
 	nullpo_ret(0, sd);
-	clif_sendminitext(sd, "Levels reloaded!");
+	client_send_minitext(sd, "Levels reloaded!");
 	return 0;
 }
 
 int command_reloadwarps(USER* sd, char* line, lua_State* state) {
 	warp_init();
 	nullpo_ret(0, sd);
-	clif_sendminitext(sd, "Warps reloaded!");
+	client_send_minitext(sd, "Warps reloaded!");
 	return 0;
 }
 
@@ -1659,7 +1659,7 @@ int command_reload(USER* sd, char* line, lua_State* state) {
 	command_reloadwarps(sd, line, state);
 
 	nullpo_ret(errors, sd);
-	clif_sendminitext(sd, "Mini reset complete!");
+	client_send_minitext(sd, "Mini reset complete!");
 	return errors;
 }
 int at_command(USER* sd, const char* p, int len) {

@@ -19,7 +19,7 @@
 #include "version.h"
 #include "map.h"
 #include "crypt.h"
-#include "clif.h"
+#include "client.h"
 #include "intif.h"
 #include "mmo.h"
 #include "malloc.h"
@@ -29,7 +29,7 @@
 #include "recipedb.h"
 #include "magic.h"
 #include "pc.h"
-#include "sl.h"
+#include "lua_core.h"
 #include "npc.h"
 #include "script.h"
 #include "mob.h"
@@ -402,7 +402,7 @@ int isPlayerActive(USER* sd) {
 		//create_session(sd->fd); //Recreate socket data.
 		//session[sd->fd]->session_data=sd;
 		//session[sd->fd]->eof=1;
-		//clif_handle_disconnect(sd);
+		//client_handle_disconnect(sd);
 		//session_eof(sd->fd);
 		//FREE(sd);
 		//return 1;
@@ -1686,7 +1686,7 @@ int change_time_char(int none, int none2) {
 
 	for (i = 0; i < fd_max; i++) {
 		if (session[i] && (sd = session[i]->session_data)) {
-			clif_sendtime(sd);
+			client_sendtime(sd);
 		}
 	}
 
@@ -1865,9 +1865,9 @@ int do_init(int argc, char** argv) {
 	object_flag_init();
 	sl_init();
 	map_loadgameregistry();
-	//set_defaultaccept(clif_accept);
-	set_defaultparse(clif_parse);
-	set_defaulttimeout(clif_timeout);
+	//set_defaultaccept(client_accept);
+	set_defaultparse(client_parse);
+	set_defaulttimeout(client_timeout);
 	map_fd = make_listen_port(map_port);
 	cur_time = 12;
 	cur_day = 0;
@@ -2059,7 +2059,7 @@ int boards_post(USER* sd, int board) {
 	memcpy(header.name, sd->status.name, 16);
 	topiclen = RFIFOB(sd->fd, 8);
 	if (topiclen > 52) {
-		clif_Hacker(sd->status.name, "Board hacking: TOPIC HACK");
+		client_hacker(sd->status.name, "Board hacking: TOPIC HACK");
 		return 0;
 	}
 
@@ -2068,7 +2068,7 @@ int boards_post(USER* sd, int board) {
 	postlen = SWAP16(RFIFOW(sd->fd, topiclen + 9));
 
 	if (postlen > 4000) {
-		clif_Hacker(sd->status.name, "Board hacking: POST(BODY) HACK");
+		client_hacker(sd->status.name, "Board hacking: POST(BODY) HACK");
 
 		return 0;
 	}
@@ -2148,7 +2148,7 @@ int nmail_read(USER* sd, int post) {
 		sd->hasmail=1;
 	}
 	if(hasm!=sd->hasmail) {
-			clif_sendstatus2(sd);
+			client_send_status2(sd);
 	}
 	sql_free_row();*/
 	return 0;
@@ -2253,17 +2253,17 @@ int nmail_write(USER* sd) {
 
 	tolen = RFIFOB(sd->fd, 8);
 	if (tolen > 52) {
-		clif_Hacker(sd->status.name, "NMAIL: To User");
+		client_hacker(sd->status.name, "NMAIL: To User");
 		return 0;
 	}
 	topiclen = RFIFOB(sd->fd, tolen + 9);
 	if (topiclen > 52) {
-		clif_Hacker(sd->status.name, "NMAIL: Topic");
+		client_hacker(sd->status.name, "NMAIL: Topic");
 		return 0;
 	}
 	messagelen = SWAP16(RFIFOW(sd->fd, tolen + topiclen + 10));
 	if (messagelen > 4000) {
-		clif_Hacker(sd->status.name, "NMAIL: Message");
+		client_hacker(sd->status.name, "NMAIL: Message");
 		return 0;
 	}
 
@@ -2316,7 +2316,7 @@ int nmail_write(USER* sd) {
 
 	tsd = map_name2sd(to_user);
 
-	/*if (tsd && clif_isignore(sd, tsd))*/
+	/*if (tsd && client_is_ignore(sd, tsd))*/
 
 	nmail_sendmail(sd, to_user, topic, message);
 
@@ -2508,7 +2508,7 @@ void mmo_setonline(unsigned int id, int val) {
 		sprintf(escape, "%u.%u.%u.%u\0", a, b, c, d);
 		printf("[MAP LOGIN]: %s connected from %s!\n", sd->status.name, escape);
 
-		//if (strcmpi(escape,"71.78.153.2") == 0 || strcmpi(escape,"71.238.0.230") == 0) { clif_handle_disconnect(sd); clif_closeit(sd);}
+		//if (strcmpi(escape,"71.78.153.2") == 0 || strcmpi(escape,"71.238.0.230") == 0) { client_handle_disconnect(sd); client_close_it(sd);}
 
 		sl_doscript_blargs("login", NULL, 1, &sd->bl);
 
@@ -2561,12 +2561,12 @@ int map_reset_timer(int v1, int v2) {
 	reset -= v2;
 	diff += v2;
 	if (reset <= 250) {
-		clif_broadcast("Chaos is rising up. Please re-enter in a few seconds.", -1);
+		client_broadcast("Chaos is rising up. Please re-enter in a few seconds.", -1);
 	}
 	if (reset <= 0) {
 		for (x = 0; x < fd_max; x++) {
 			if (session[x] && (sd = session[x]->session_data) && !session[x]->eof) {
-				clif_handle_disconnect(sd);
+				client_handle_disconnect(sd);
 
 				if (session[x]->func_parse) {
 					session[x]->func_parse(x);
@@ -2591,27 +2591,27 @@ int map_reset_timer(int v1, int v2) {
 	if (reset <= 60000) { //Less than a minute remaining(gonna mass spell everyone)
 		if (diff >= 10000) { // every 10 seconds
 			sprintf(msg, "RetroTK! Reset in %d seconds", reset / 1000);
-			//clif_broadcast("---------------------------------------------------",-1);
-			clif_broadcast(msg, -1);
-			//clif_broadcast("---------------------------------------------------",-1);
+			//client_broadcast("---------------------------------------------------",-1);
+			client_broadcast(msg, -1);
+			//client_broadcast("---------------------------------------------------",-1);
 			diff = 0;
 		}
 	}
 	else if (reset <= 3600000) { // 60 mins
 		if (diff >= 300000) { // every 5 mins
 			sprintf(msg, "RetroTK! Reset in %d minutes", reset / 60000);
-			//clif_broadcast("---------------------------------------------------",-1);
-			clif_broadcast(msg, -1);
-			//clif_broadcast("---------------------------------------------------",-1);
+			//client_broadcast("---------------------------------------------------",-1);
+			client_broadcast(msg, -1);
+			//client_broadcast("---------------------------------------------------",-1);
 			diff = 0;
 		}
 	}
 	else if (reset > 3600000) { // every hour
 		if (diff >= 3600000) { // once every hour
 			sprintf(msg, "RetroTK! Reset in %d hours", reset / 3600000);
-			//clif_broadcast("---------------------------------------------------",-1);
-			clif_broadcast(msg, -1);
-			//clif_broadcast("---------------------------------------------------",-1);
+			//client_broadcast("---------------------------------------------------",-1);
+			client_broadcast(msg, -1);
+			//client_broadcast("---------------------------------------------------",-1);
 			diff = 0;
 		}
 	}

@@ -203,8 +203,8 @@ int parse_walk(int fd, USER* sd) {
 
 | File | Purpose |
 |------|---------|
-| `clif.c` | Main packet handling |
-| `clif_crypto.c` | Encryption/decryption |
+| `client.c` | Main packet handling |
+| `client_crypto.c` | Encryption/decryption |
 | `crypt.c` | Encryption algorithms |
 | `socket.c` | Network I/O, WFIFO/RFIFO |
 | `conf/crypto.conf` | Configurable key mappings |

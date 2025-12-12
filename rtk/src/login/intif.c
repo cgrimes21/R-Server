@@ -8,7 +8,7 @@
 #include "mmo.h"
 #include "crypt.h"
 #include "intif.h"
-#include "clif.h"
+#include "login_client.h"
 #include "timer.h"
 #include "db_mysql.h"
 
@@ -61,11 +61,11 @@ int intif_parse_2001(int fd) {
 		return 0;
 
 	if (RFIFOB(fd, 4) == 0x01)
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_USEREXIST]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_USEREXIST]);
 	else if (RFIFOB(fd, 4))
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_ERRDB]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_ERRDB]);
 	else
-		clif_message(RFIFOW(fd, 2), 0x00, "\x00");
+		login_client_message(RFIFOW(fd, 2), 0x00, "\x00");
 
 	return 0;
 }
@@ -74,11 +74,11 @@ int intif_parse_2002(int fd) {
 		return 0;
 
 	if (RFIFOB(fd, 4) == 0x01)
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_USEREXIST]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_USEREXIST]);
 	else if (RFIFOB(fd, 4))
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_ERRDB]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_ERRDB]);
 	else
-		clif_message(RFIFOW(fd, 2), 0x00, login_msg[LGN_NEWCHAR]);
+		login_client_message(RFIFOW(fd, 2), 0x00, login_msg[LGN_NEWCHAR]);
 
 	return 0;
 }
@@ -150,23 +150,23 @@ int intif_parse_connectconfirm(int fd) {
 		WFIFOSET(RFIFOW(fd, 2), 11 + len + 3);
 	}
 	else if (RFIFOB(fd, 4) == 0x01)
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_ERRDB]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_ERRDB]);
 	else if (RFIFOB(fd, 4) == 0x02)
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_WRONGUSER]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_WRONGUSER]);
 	else if (RFIFOB(fd, 4) == 0x03) {
 		Log_Add("invalidlogin", "<%02d:%02d> Login:%s IP:%u.%u.%u.%u Password used:%s\n", getHour(), getMinute(), sd->name, CONVIP(session[RFIFOW(fd, 2)]->client_addr.sin_addr.s_addr), sd->pass);
 		if (setInvalidCount(session[RFIFOW(fd, 2)]->client_addr.sin_addr.s_addr) >= 10) {
 			add_ip_lockout(session[RFIFOW(fd, 2)]->client_addr.sin_addr.s_addr);
 			session[RFIFOW(fd, 2)]->eof = 1;
 		}
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_WRONGPASS]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_WRONGPASS]);
 	}
 	else if (RFIFOB(fd, 4) == 0x04)
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_BANNED]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_BANNED]);
 	else if (RFIFOB(fd, 4) == 0x05)
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_ERRSERVER]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_ERRSERVER]);
 	else if (RFIFOB(fd, 4) == 0x06)
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_DBLLOGIN]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_DBLLOGIN]);
 	else
 		printf("Serious error!\n");
 
@@ -178,19 +178,19 @@ int intif_parse_changepass(int fd) {
 
 	if (!RFIFOB(fd, 4)) {
 		Log_Add("validchange", "<%d:%d> IP: %u.%u.%u.%u\n", getHour(), getMinute(), CONVIP(session[RFIFOW(fd, 2)]->client_addr.sin_addr.s_addr));
-		clif_message(RFIFOW(fd, 2), 0x00, login_msg[LGN_CHGPASS]);
+		login_client_message(RFIFOW(fd, 2), 0x00, login_msg[LGN_CHGPASS]);
 	}
 	else if (RFIFOB(fd, 4) == 0x01)
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_ERRDB]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_ERRDB]);
 	else if (RFIFOB(fd, 4) == 0x02)
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_WRONGUSER]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_WRONGUSER]);
 	else if (RFIFOB(fd, 4) == 0x03) {
 		Log_Add("invalidchange", "<%02d:%02d> IP:%u.%u.%u.%u\n", getHour(), getMinute(), CONVIP(session[RFIFOW(fd, 2)]->client_addr.sin_addr.s_addr));
 		if (setInvalidCount(session[RFIFOW(fd, 2)]->client_addr.sin_addr.s_addr) >= 10) {
 			add_ip_lockout(session[RFIFOW(fd, 2)]->client_addr.sin_addr.s_addr);
 			session[RFIFOW(fd, 2)]->eof = 1;
 		}
-		clif_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_WRONGPASS]);
+		login_client_message(RFIFOW(fd, 2), 0x03, login_msg[LGN_WRONGPASS]);
 	}
 	return 0;
 }

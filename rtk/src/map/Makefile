@@ -5,29 +5,24 @@
 
 all: map-server
 
-# Note: clif_*.c modules contain extracted functions but clif.c still has originals
-# To complete extraction: remove duplicate functions from clif.c
-# For now, compile only clif.c (modules are header-only wrappers)
-CLIF_OBJ = clif.o
-# Note: sl_blocklist.c contains extracted bll_* functions but sl.c still has originals
-# Note: sl_player.c contains extracted pcl_* functions but sl.c still has originals
-# Note: sl_registry.c contains extracted registry types but sl.c still has originals
-# To complete extraction: remove functions from sl.c, then add sl_blocklist.o sl_player.o sl_registry.o
-SL_OBJ = sl.o sl_types.o
+# Client layer - renamed from clif_* to client_* for clarity
+CLIENT_OBJ = client.o client_crypto.o client_chat.o client_visual.o client_combat.o client_inventory.o client_npc.o client_player.o
+# Lua binding layer - renamed from sl_* to lua_* for clarity
+LUA_OBJ = lua_core.o lua_types.o lua_blocklist.o lua_player.o lua_mob.o lua_npc.o lua_item.o lua_registry.o
 
-map-server: map.o $(CLIF_OBJ) $(SL_OBJ) intif.o class_db.o itemdb.o recipedb.o pc.o npc.o script.o command.o mob.o magic.o board_db.o clan_db.o creation.o guide.o $(COMMON_OBJ)
+map-server: map.o $(CLIENT_OBJ) $(LUA_OBJ) intif.o class_db.o itemdb.o recipedb.o pc.o npc.o script.o command.o mob.o magic.o board_db.o clan_db.o creation.o guide.o $(COMMON_OBJ)
 	@echo -e " Linking... $<"
-	@$(CC) -o ../../$@ map.o $(CLIF_OBJ) $(SL_OBJ) intif.o class_db.o itemdb.o recipedb.o pc.o npc.o script.o command.o mob.o magic.o board_db.o clan_db.o creation.o guide.o $(COMMON_OBJ) $(CLIBS)
+	@$(CC) -o ../../$@ map.o $(CLIENT_OBJ) $(LUA_OBJ) intif.o class_db.o itemdb.o recipedb.o pc.o npc.o script.o command.o mob.o magic.o board_db.o clan_db.o creation.o guide.o $(COMMON_OBJ) $(CLIBS)
 
 map.o: map.c map.h $(COMMON_H)
-clif.o: clif.c clif.h $(COMMON_H)
-clif_crypto.o: clif_crypto.c clif_crypto.h $(COMMON_H)
-clif_chat.o: clif_chat.c clif_chat.h $(COMMON_H)
-clif_visual.o: clif_visual.c clif_visual.h $(COMMON_H)
-clif_combat.o: clif_combat.c clif_combat.h $(COMMON_H)
-clif_inventory.o: clif_inventory.c clif_inventory.h $(COMMON_H)
-clif_npc.o: clif_npc.c clif_npc.h $(COMMON_H)
-clif_player.o: clif_player.c clif_player.h $(COMMON_H)
+client.o: client.c client.h $(COMMON_H)
+client_crypto.o: client_crypto.c client_crypto.h $(COMMON_H)
+client_chat.o: client_chat.c client_chat.h $(COMMON_H)
+client_visual.o: client_visual.c client_visual.h $(COMMON_H)
+client_combat.o: client_combat.c client_combat.h $(COMMON_H)
+client_inventory.o: client_inventory.c client_inventory.h $(COMMON_H)
+client_npc.o: client_npc.c client_npc.h $(COMMON_H)
+client_player.o: client_player.c client_player.h $(COMMON_H)
 intif.o: intif.c intif.h $(COMMON_H)
 class_db.o: class_db.c class_db.h $(COMMON_H)
 itemdb.o: itemdb.c itemdb.h $(COMMON_H)
@@ -40,14 +35,14 @@ mob.o: mob.c mob.h $(COMMON_H)
 magic.o: magic.c magic.h $(COMMON_H)
 board_db.o: board_db.c board_db.h $(COMMON_H)
 clan_db.o: clan_db.c clan_db.h $(COMMON_H)
-sl.o: sl.c sl.h sl_types.h sl_blocklist.h $(COMMON_H)
-sl_types.o: sl_types.c sl_types.h sl.h $(COMMON_H)
-sl_blocklist.o: sl_blocklist.c sl_blocklist.h sl_types.h sl.h $(COMMON_H)
-sl_player.o: sl_player.c sl_player.h sl_types.h sl.h $(COMMON_H)
-sl_registry.o: sl_registry.c sl_registry.h sl_types.h sl.h $(COMMON_H)
-sl_item.o: sl_item.c sl_item.h sl_types.h sl.h $(COMMON_H)
-sl_npc.o: sl_npc.c sl_npc.h sl_types.h sl.h $(COMMON_H)
-sl_mob.o: sl_mob.c sl_mob.h sl_types.h sl.h $(COMMON_H)
+lua_core.o: lua_core.c lua_core.h lua_types.h lua_blocklist.h $(COMMON_H)
+lua_types.o: lua_types.c lua_types.h $(COMMON_H)
+lua_blocklist.o: lua_blocklist.c lua_blocklist.h lua_types.h lua_core.h $(COMMON_H)
+lua_player.o: lua_player.c lua_player.h lua_types.h lua_core.h $(COMMON_H)
+lua_registry.o: lua_registry.c lua_registry.h lua_types.h lua_core.h $(COMMON_H)
+lua_item.o: lua_item.c lua_item.h lua_types.h lua_core.h $(COMMON_H)
+lua_npc.o: lua_npc.c lua_npc.h lua_types.h lua_core.h $(COMMON_H)
+lua_mob.o: lua_mob.c lua_mob.h lua_types.h lua_core.h $(COMMON_H)
 creation.o: creation.c creation.h $(COMMON_H)
 guide.o: guide.c guide.h $(COMMON_H)
 clean:

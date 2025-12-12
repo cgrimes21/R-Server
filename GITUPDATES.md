@@ -43,6 +43,15 @@ This document tracks all changes made during the RTK Server refactoring project.
 | 4.2 | Memory Management | Memory conventions and safety macros | COMPLETE |
 | 4.3 | Documentation | Packet protocol and Lua API docs | COMPLETE |
 
+### Phase 5: Naming Convention Cleanup
+**Goal**: Replace cryptic prefixes with readable, self-documenting names
+
+| Phase | Target | Description | Status |
+|-------|--------|-------------|--------|
+| 5.1 | Client Layer | Rename clif_* → client_* | COMPLETE |
+| 5.2 | Login Server | Rename login clif.c → login_client.c | COMPLETE |
+| 5.3 | Lua Layer | Rename sl_* → lua_* | PENDING |
+
 ---
 
 ## Phase 1: C File Refactoring
@@ -1657,6 +1666,76 @@ ZERO_ARRAY(arr, count)          // Zero out array
 
 ---
 
+## Phase 5: Naming Convention Cleanup
+
+### Phase 5.1: Client Layer Rename (COMPLETE)
+
+**Goal**: Replace cryptic `clif_` prefix with readable `client_` prefix
+
+#### Files Renamed
+
+| Old Name | New Name |
+|----------|----------|
+| `clif.c` | `client.c` |
+| `clif.h` | `client.h` |
+| `clif_crypto.c/h` | `client_crypto.c/h` |
+| `clif_chat.c/h` | `client_chat.c/h` |
+| `clif_visual.c/h` | `client_visual.c/h` |
+| `clif_combat.c/h` | `client_combat.c/h` |
+| `clif_inventory.c/h` | `client_inventory.c/h` |
+| `clif_npc.c/h` | `client_npc.c/h` |
+| `clif_player.c/h` | `client_player.c/h` |
+
+#### Function Prefix Changes
+
+All ~180 functions renamed from `clif_*` to `client_*`:
+- `clif_send()` → `client_send()`
+- `clif_parse()` → `client_parse()`
+- `clif_broadcast()` → `client_broadcast()`
+- `clif_sendminitext()` → `client_send_minitext()`
+- `clif_mob_damage()` → `client_mob_damage()`
+- etc.
+
+#### Cross-Reference Updates
+
+Updated all calling files:
+- `map.c`, `pc.c`, `mob.c`, `npc.c`, `command.c`
+- `intif.c`, `creation.c`, `script.c`
+- `sl.c`, `sl_blocklist.c`, `sl_mob.c`, `sl_player.c`
+
+---
+
+### Phase 5.2: Login Server Rename (COMPLETE)
+
+**Goal**: Rename login server client interface for consistency
+
+| Old Name | New Name |
+|----------|----------|
+| `rtk/src/login/clif.c` | `rtk/src/login/login_client.c` |
+| `rtk/src/login/clif.h` | `rtk/src/login/login_client.h` |
+
+Functions renamed:
+- `clif_accept()` → `login_client_accept()`
+- `clif_parse()` → `login_client_parse()`
+- `clif_message()` → `login_client_message()`
+- `clif_sendurl()` → `login_client_sendurl()`
+
+---
+
+### Phase 5.3: Lua Layer Rename (PENDING)
+
+**Goal**: Replace cryptic `sl_`, `pcl_`, `mobl_`, `npcl_` prefixes with `lua_*`
+
+| Old Prefix | New Prefix | Example |
+|------------|------------|---------|
+| `sl_` | `lua_` | `sl_init()` → `lua_binding_init()` |
+| `pcl_` | `lua_player_` | `pcl_warp()` → `lua_player_warp()` |
+| `mobl_` | `lua_mob_` | `mobl_attack()` → `lua_mob_attack()` |
+| `npcl_` | `lua_npc_` | `npcl_move()` → `lua_npc_move()` |
+| `bll_` | `lua_blocklist_` | `bll_spawn()` → `lua_blocklist_spawn()` |
+
+---
+
 ## Refactoring Project Summary
 
 ### All Phases Complete
@@ -1675,6 +1754,8 @@ ZERO_ARRAY(arr, count)          // Zero out array
 | 4.1 | Error handling | rtk_error.h |
 | 4.2 | Memory management | rtk_memory.h |
 | 4.3 | Documentation | PROTOCOL.md, LUA_API.md |
+| 5.1 | Client layer rename | clif_* → client_* (16 files, ~180 functions) |
+| 5.2 | Login server rename | login_client.c/h |
 
 ### Total Code Impact
 
@@ -1687,4 +1768,4 @@ ZERO_ARRAY(arr, count)          // Zero out array
 
 ---
 
-*Last Updated: 2025-12-12*
+*Last Updated: 2025-12-12 (Phase 5.1-5.2 Naming Convention Cleanup)*

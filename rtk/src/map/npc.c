@@ -10,9 +10,9 @@
 #include "db.h"
 #include "db_mysql.h"
 #include "strlib.h"
-#include "sl.h"
+#include "lua_core.h"
 #include "timer.h"
-#include "clif.h"
+#include "client.h"
 #include "mob.h"
 
 struct npc_src_list {
@@ -673,12 +673,12 @@ int npc_move(NPC* nd) {
 	map_foreachincell(npc_move_sub, m, dx, dy, BL_PC, nd);
 	map_foreachincell(npc_move_sub, m, dx, dy, BL_NPC, nd);
 
-	if (clif_object_canmove(m, dx, dy, direction)) {
+	if (client_object_can_move(m, dx, dy, direction)) {
 		nd->canmove = 0;
 		return 0;
 	}
 
-	if (clif_object_canmove_from(m, backx, backy, direction)) {
+	if (client_object_can_move_from(m, backx, backy, direction)) {
 		nd->canmove = 0;
 		return 0;
 	}
@@ -713,16 +713,16 @@ int npc_move(NPC* nd) {
 
 		if (!nothingnew) {
 			if (nd->npctype == 1) {
-				map_foreachinblock(clif_cnpclook_sub, nd->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, nd);
+				map_foreachinblock(client_npc_look_sub, nd->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, nd);
 			}
 			else {
-				map_foreachinblock(clif_mob_look_start_func, nd->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, nd);
-				map_foreachinblock(clif_object_look_sub, nd->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, &nd->bl);
-				map_foreachinblock(clif_mob_look_close_func, nd->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, nd);
+				map_foreachinblock(client_mob_look_start_func, nd->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, nd);
+				map_foreachinblock(client_object_look_sub, nd->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, &nd->bl);
+				map_foreachinblock(client_mob_look_close_func, nd->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, nd);
 			}
 		}
 
-		map_foreachinarea(clif_npc_move, m, nd->bl.x, nd->bl.y, AREA, BL_PC, LOOK_SEND, nd);
+		map_foreachinarea(client_npc_move, m, nd->bl.x, nd->bl.y, AREA, BL_PC, LOOK_SEND, nd);
 		return 1;
 	}
 	else {
@@ -734,7 +734,7 @@ int npc_warp(NPC* nd, int m, int x, int y) {
 	nullpo_ret(0, nd);
 	if (nd->bl.id < NPC_START_NUM) return 0;
 	map_delblock(&nd->bl);
-	clif_lookgone(&nd->bl);
+	client_look_gone(&nd->bl);
 	nd->bl.m = m;
 	nd->bl.x = x;
 	nd->bl.y = y;
@@ -745,10 +745,10 @@ int npc_warp(NPC* nd, int m, int x, int y) {
 	}
 
 	if (nd->npctype == 1) {
-		map_foreachinarea(clif_cnpclook_sub, nd->bl.m, nd->bl.x, nd->bl.y, AREA, BL_PC, LOOK_SEND, nd);
+		map_foreachinarea(client_npc_look_sub, nd->bl.m, nd->bl.x, nd->bl.y, AREA, BL_PC, LOOK_SEND, nd);
 	}
 	else {
-		map_foreachinarea(clif_object_look_sub2, nd->bl.m, nd->bl.x, nd->bl.y, AREA, BL_PC, LOOK_SEND, nd);
+		map_foreachinarea(client_object_look_sub2, nd->bl.m, nd->bl.x, nd->bl.y, AREA, BL_PC, LOOK_SEND, nd);
 	}
 	return 0;
 }

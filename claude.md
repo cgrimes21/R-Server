@@ -29,9 +29,9 @@ RetroTK Server is a complete MMO game server implementation featuring:
 
 ### Phase 1: Split Monolithic C Files ✅ COMPLETE
 > **Target**: Break down massive files into focused, maintainable modules
-> **Result**: clif.c and sl.c successfully modularized; other files appropriately sized
+> **Result**: client.c and sl.c successfully modularized; other files appropriately sized
 
-#### 1.1 clif.c (15,731 lines) - Client Interface ✅
+#### 1.1 client.c (15,731 lines) - Client Interface ✅
 > **Status**: COMPLETE
 > **Original**: 15,731 lines, ~180 functions
 > **Target**: 8 focused modules, ~2,000 lines each
@@ -40,113 +40,113 @@ RetroTK Server is a complete MMO game server implementation featuring:
 
 | New File | ~Lines | Functions | Description |
 |----------|--------|-----------|-------------|
-| `clif_crypto.c` | ~100 | 4 | Encryption/decryption |
-| `clif_visual.c` | ~1,800 | 25 | Animations, look packets, movement display |
-| `clif_combat.c` | ~1,500 | 20 | Health bars, damage, attacks |
-| `clif_inventory.c` | ~1,800 | 30 | Items, equipment, durability |
-| `clif_npc.c` | ~2,500 | 35 | NPC dialogs, menus, shops |
-| `clif_chat.c` | ~1,500 | 25 | Chat, whispers, broadcasts |
-| `clif_player.c` | ~2,000 | 30 | Status, groups, exchange, movement |
-| `clif.c` | ~2,000 | 20 | Core packet routing, parse loop |
+| `client_crypto.c` | ~100 | 4 | Encryption/decryption |
+| `client_visual.c` | ~1,800 | 25 | Animations, look packets, movement display |
+| `client_combat.c` | ~1,500 | 20 | Health bars, damage, attacks |
+| `client_inventory.c` | ~1,800 | 30 | Items, equipment, durability |
+| `client_npc.c` | ~2,500 | 35 | NPC dialogs, menus, shops |
+| `client_chat.c` | ~1,500 | 25 | Chat, whispers, broadcasts |
+| `client_player.c` | ~2,000 | 30 | Status, groups, exchange, movement |
+| `client.c` | ~2,000 | 20 | Core packet routing, parse loop |
 
 ##### Detailed Function Mapping
 
-**clif_crypto.c** (~100 lines)
+**client_crypto.c** (~100 lines)
 - `encrypt()` - Encrypt outgoing packet
 - `decrypt()` - Decrypt incoming packet
 - `isKey()` - Check if packet uses key1
 - `isKey2()` - Check if packet uses key2
 - Globals: `clkey2[]`, `svkey2[]`, `svkey1packets[]`, `clkey1packets[]`
 
-**clif_visual.c** (~1,800 lines)
-- `clif_sendanimation()`, `clif_sendanimation_xy()`, `clif_animation()`, `clif_sendanimations()`
-- `clif_sendaction()`, `clif_sendmob_action()`
-- `clif_playsound()`
-- `clif_lookgone()`
-- `clif_sendside()`, `clif_sendmob_side()`
-- `clif_mob_move()`, `clif_npc_move()`
-- `clif_cnpclook_sub()`, `clif_cmoblook_sub()`, `clif_charlook_sub()`
-- `clif_object_look_sub()`, `clif_object_look_sub2()`, `clif_object_look_specific()`
-- `clif_mob_look_start()`, `clif_mob_look_close()`, `clif_mob_look_start_func()`, `clif_mob_look_close_func()`
-- `clif_show_ghost()`
-- `clif_send_destroy()`
+**client_visual.c** (~1,800 lines)
+- `client_sendanimation()`, `client_sendanimation_xy()`, `client_animation()`, `client_sendanimations()`
+- `client_sendaction()`, `client_sendmob_action()`
+- `client_playsound()`
+- `client_lookgone()`
+- `client_sendside()`, `client_sendmob_side()`
+- `client_mob_move()`, `client_npc_move()`
+- `client_cnpclook_sub()`, `client_cmoblook_sub()`, `client_charlook_sub()`
+- `client_object_look_sub()`, `client_object_look_sub2()`, `client_object_look_specific()`
+- `client_mob_look_start()`, `client_mob_look_close()`, `client_mob_look_start_func()`, `client_mob_look_close_func()`
+- `client_show_ghost()`
+- `client_send_destroy()`
 
-**clif_combat.c** (~1,500 lines)
-- `clif_pc_damage()`, `clif_mob_damage()`
-- `clif_send_pc_health()`, `clif_send_pc_healthscript()`
-- `clif_send_mob_health()`, `clif_send_mob_healthscript()`, `clif_send_mob_health_sub()`, `clif_send_mob_health_sub_nosd()`
-- `clif_send_selfbar()`, `clif_send_groupbars()`, `clif_send_mobbars()`
-- `clif_mob_kill()`
-- `clif_calc_critical()`
-- `clif_parseattack()`
-- `clif_deductweapon()`, `clif_deductarmor()`, `clif_deductdura()`, `clif_deductduraequip()`, `clif_checkdura()`
+**client_combat.c** (~1,500 lines)
+- `client_pc_damage()`, `client_mob_damage()`
+- `client_send_pc_health()`, `client_send_pc_healthscript()`
+- `client_send_mob_health()`, `client_send_mob_healthscript()`, `client_send_mob_health_sub()`, `client_send_mob_health_sub_nosd()`
+- `client_send_selfbar()`, `client_send_groupbars()`, `client_send_mobbars()`
+- `client_mob_kill()`
+- `client_calc_critical()`
+- `client_parseattack()`
+- `client_deductweapon()`, `client_deductarmor()`, `client_deductdura()`, `client_deductduraequip()`, `client_checkdura()`
 
-**clif_inventory.c** (~1,800 lines)
-- `clif_sendadditem()`, `clif_senddelitem()`
-- `clif_sendequip()`, `clif_equipit()`, `clif_unequipit()`
-- `clif_parsedropitem()`, `clif_parsegetitem()`, `clif_parseuseitem()`, `clif_parseeatitem()`, `clif_parseunequip()`
-- `clif_throwitem_script()`, `clif_throwitem_sub()`, `clif_throw_check()`, `clif_throwconfirm()`, `clif_parsethrow()`
-- `clif_checkinvbod()`
-- `clif_dropgold()`, `clif_handgold()`, `clif_handitem()`, `clif_postitem()`
-- `getclifslotfromequiptype()`, `clif_getequiptype()`
+**client_inventory.c** (~1,800 lines)
+- `client_sendadditem()`, `client_senddelitem()`
+- `client_sendequip()`, `client_equipit()`, `client_unequipit()`
+- `client_parsedropitem()`, `client_parsegetitem()`, `client_parseuseitem()`, `client_parseeatitem()`, `client_parseunequip()`
+- `client_throwitem_script()`, `client_throwitem_sub()`, `client_throw_check()`, `client_throwconfirm()`, `client_parsethrow()`
+- `client_checkinvbod()`
+- `client_dropgold()`, `client_handgold()`, `client_handitem()`, `client_postitem()`
+- `client_get_slot_from_equip_type()`, `client_get_equip_type()`
 
-**clif_npc.c** (~2,500 lines)
-- `clif_scriptmes()`, `clif_scriptmenu()`, `clif_scriptmenuseq()`
-- `clif_parsemenu()`, `clif_parsenpcdialog()`
-- `clif_buydialog()`, `clif_parsebuy()`
-- `clif_selldialog()`, `clif_parsesell()`
-- `clif_input()`, `clif_inputseq()`, `clif_parseinput()`
-- `clif_parselookat()`, `clif_parselookat_2()`, `clif_parselookat_sub()`, `clif_parselookat_scriptsub()`
-- `clif_clickonplayer()`
-- `clif_hairfacemenu()`
-- `clif_mapmsgnum()`
+**client_npc.c** (~2,500 lines)
+- `client_scriptmes()`, `client_scriptmenu()`, `client_scriptmenuseq()`
+- `client_parsemenu()`, `client_parsenpcdialog()`
+- `client_buydialog()`, `client_parsebuy()`
+- `client_selldialog()`, `client_parsesell()`
+- `client_input()`, `client_inputseq()`, `client_parseinput()`
+- `client_parselookat()`, `client_parselookat_2()`, `client_parselookat_sub()`, `client_parselookat_scriptsub()`
+- `client_clickonplayer()`
+- `client_hairfacemenu()`
+- `client_mapmsgnum()`
 
-**clif_chat.c** (~1,500 lines)
-- `clif_sendsay()`, `clif_sendscriptsay()`, `clif_parsesay()`
-- `clif_sendwisp()`, `clif_retrwisp()`, `clif_failwisp()`, `clif_parsewisp()`
-- `clif_sendmsg()`, `clif_sendminitext()`, `clif_sendbluemessage()`
-- `clif_broadcast()`, `clif_gmbroadcast()`, `clif_broadcasttogm()` + `_sub` variants
-- `clif_sendnpcsay()`, `clif_sendmobsay()`, `clif_sendnpcyell()`, `clif_sendmobyell()`, `clif_speak()`
-- `clif_popup()`, `clif_paperpopup()`, `clif_paperpopupwrite()`, `clif_paperpopupwrite_save()`
-- `clif_sendgroupmessage()`, `clif_sendclanmessage()`, `clif_sendsubpathmessage()`, `clif_sendnovicemessage()`
-- `clif_parseignore()`, `clif_isignore()`, `clif_guitext()`, `clif_guitextsd()`
+**client_chat.c** (~1,500 lines)
+- `client_sendsay()`, `client_sendscriptsay()`, `client_parsesay()`
+- `client_sendwisp()`, `client_retrwisp()`, `client_failwisp()`, `client_parsewisp()`
+- `client_sendmsg()`, `client_sendminitext()`, `client_sendbluemessage()`
+- `client_broadcast()`, `client_gmbroadcast()`, `client_broadcasttogm()` + `_sub` variants
+- `client_sendnpcsay()`, `client_sendmobsay()`, `client_sendnpcyell()`, `client_sendmobyell()`, `client_speak()`
+- `client_popup()`, `client_paperpopup()`, `client_paperpopupwrite()`, `client_paperpopupwrite_save()`
+- `client_sendgroupmessage()`, `client_sendclanmessage()`, `client_sendsubpathmessage()`, `client_sendnovicemessage()`
+- `client_parseignore()`, `client_isignore()`, `client_guitext()`, `client_guitextsd()`
 
-**clif_player.c** (~2,000 lines)
-- Status: `clif_sendstatus()`, `clif_sendupdatestatus()`, `clif_sendupdatestatus2()`, `clif_sendstatus2()`, `clif_sendstatus3()`
-- Position: `clif_sendxy()`, `clif_sendxynoclick()`, `clif_sendxychange()`
-- Movement: `clif_parsewalk()`, `clif_noparsewalk()`, `clif_parsewalkpong()`, `clif_parseside()`, `clif_parsechangepos()`
-- Movement checks: `clif_canmove()`, `clif_canmove_sub()`, `clif_object_canmove()`, `clif_object_canmove_from()`, `clif_blockmovement()`
-- Groups: `clif_groupstatus()`, `clif_grouphealth_update()`, `clif_addgroup()`, `clif_updategroup()`, `clif_leavegroup()`, `clif_isingroup()`, `clif_groupexp()`
-- Exchange: `clif_parse_exchange()`, `clif_startexchange()`, `clif_exchange_additem()`, `clif_exchange_additem_else()`, `clif_exchange_money()`, `clif_exchange_sendok()`, `clif_exchange_finalize()`, `clif_exchange_message()`, `clif_exchange_close()`, `clif_exchange_cleanup()`
-- Other: `clif_changestatus()`, `clif_updatestate()`, `clif_sendoptions()`, `clif_mystaytus()`, `clif_refresh()`, `clif_refreshnoclick()`
+**client_player.c** (~2,000 lines)
+- Status: `client_sendstatus()`, `client_sendupdatestatus()`, `client_sendupdatestatus2()`, `client_sendstatus2()`, `client_sendstatus3()`
+- Position: `client_sendxy()`, `client_sendxynoclick()`, `client_sendxychange()`
+- Movement: `client_parsewalk()`, `client_noparsewalk()`, `client_parsewalkpong()`, `client_parseside()`, `client_parsechangepos()`
+- Movement checks: `client_canmove()`, `client_canmove_sub()`, `client_object_canmove()`, `client_object_canmove_from()`, `client_blockmovement()`
+- Groups: `client_groupstatus()`, `client_grouphealth_update()`, `client_addgroup()`, `client_updategroup()`, `client_leavegroup()`, `client_isingroup()`, `client_groupexp()`
+- Exchange: `client_parse_exchange()`, `client_startexchange()`, `client_exchange_additem()`, `client_exchange_additem_else()`, `client_exchange_money()`, `client_exchange_sendok()`, `client_exchange_finalize()`, `client_exchange_message()`, `client_exchange_close()`, `client_exchange_cleanup()`
+- Other: `client_changestatus()`, `client_updatestate()`, `client_sendoptions()`, `client_mystaytus()`, `client_refresh()`, `client_refreshnoclick()`
 
-**clif.c** (Core - ~2,000 lines remaining)
-- Packet routing: `clif_send()`, `clif_send_sub()`, `clif_sendtogm()`
-- Main parse: `clif_parse()` - THE BIG SWITCH
-- Session: `clif_accept()`, `clif_accept2()`, `clif_spawn()`, `clif_quit()`
-- Disconnect: `clif_handle_disconnect()`, `clif_handle_missingobject()`, `clif_handle_menuinput()`, `clif_handle_clickgetinfo()`, `clif_handle_obstruction()`, `clif_print_disconnect()`
-- Info: `clif_sendid()`, `clif_sendtime()`, `clif_sendmapinfo()`, `clif_sendmapdata()`, `clif_sendack()`, `clif_sendtowns()`
-- Transfer: `clif_transfer()`, `clif_transfer_test()`, `clif_closeit()`
-- Utilities: `clif_timeout()`, `clif_Hacker()`, `clif_getName()`, `replace_str()`, `CheckProximity()`, `clif_debug()`
-- Misc: `clif_sendheartbeat()`, `pc_sendpong()`, `clif_sendweather()`, `clif_screensaver()`, `clif_stoptimers()`
-- Boards/UI: `clif_sendboard()`, `clif_showboards()`, `clif_handle_boards()`, `clif_sendpowerboard()`, `clif_handle_powerboards()`, `clif_sendBoardQuestionaire()`
-- Rankings: `clif_parseranking()`, `clif_sendRewardInfo()`, `clif_getReward()`
-- Profile: `clif_sendprofile()`, `clif_sendurl()`, `clif_retrieveprofile()`, `clif_changeprofile()`
-- Magic: `clif_sendmagic()`, `clif_parsemagic()`, `clif_send_aether()`, `clif_has_aethers()`, `clif_findspell_pos()`, `clif_parsechangespell()`, `clif_removespell()`, `clif_send_duration()`
-- Hunter: `clif_huntertoggle()`, `clif_sendhunternote()`, `clif_cancelafk()`
-- Other handlers: `clif_parseemotion()`, `clif_parsemap()`, `clif_parsewield()`, `clif_parseviewchange()`, `clif_parsefriends()`, `clif_parseparcel()`, `clif_mapselect()`
+**client.c** (Core - ~2,000 lines remaining)
+- Packet routing: `client_send()`, `client_send_sub()`, `client_sendtogm()`
+- Main parse: `client_parse()` - THE BIG SWITCH
+- Session: `client_accept()`, `client_accept2()`, `client_spawn()`, `client_quit()`
+- Disconnect: `client_handle_disconnect()`, `client_handle_missingobject()`, `client_handle_menuinput()`, `client_handle_clickgetinfo()`, `client_handle_obstruction()`, `client_print_disconnect()`
+- Info: `client_sendid()`, `client_sendtime()`, `client_sendmapinfo()`, `client_sendmapdata()`, `client_sendack()`, `client_sendtowns()`
+- Transfer: `client_transfer()`, `client_transfer_test()`, `client_closeit()`
+- Utilities: `client_timeout()`, `client_Hacker()`, `client_getName()`, `replace_str()`, `CheckProximity()`, `client_debug()`
+- Misc: `client_sendheartbeat()`, `pc_sendpong()`, `client_sendweather()`, `client_screensaver()`, `client_stoptimers()`
+- Boards/UI: `client_sendboard()`, `client_showboards()`, `client_handle_boards()`, `client_sendpowerboard()`, `client_handle_powerboards()`, `client_sendBoardQuestionaire()`
+- Rankings: `client_parseranking()`, `client_sendRewardInfo()`, `client_getReward()`
+- Profile: `client_sendprofile()`, `client_sendurl()`, `client_retrieveprofile()`, `client_changeprofile()`
+- Magic: `client_sendmagic()`, `client_parsemagic()`, `client_send_aether()`, `client_has_aethers()`, `client_findspell_pos()`, `client_parsechangespell()`, `client_removespell()`, `client_send_duration()`
+- Hunter: `client_huntertoggle()`, `client_sendhunternote()`, `client_cancelafk()`
+- Other handlers: `client_parseemotion()`, `client_parsemap()`, `client_parsewield()`, `client_parseviewchange()`, `client_parsefriends()`, `client_parseparcel()`, `client_mapselect()`
 
 ##### Progress Checklist
 - [x] **Analyze and document all functions** - COMPLETE (180 functions mapped)
 - [x] **Create header files** for new modules - COMPLETE
-- [x] **Extract `clif_crypto.c`** - COMPLETE (~80 lines)
-- [x] **Extract `clif_chat.c`** - COMPLETE (~900 lines)
-- [x] **Extract `clif_visual.c`** - COMPLETE (~500 lines)
-- [x] **Extract `clif_combat.c`** - COMPLETE (~900 lines)
-- [x] **Extract `clif_inventory.c`** - COMPLETE (~1000 lines)
-- [x] **Extract `clif_npc.c`** - COMPLETE (~1,835 lines, full NPC dialogs/menus/shops)
-- [x] **Extract `clif_player.c`** - COMPLETE (~750 lines, exchange/status/refresh)
-- [x] **Update clif.c includes** - COMPLETE (all module headers included)
+- [x] **Extract `client_crypto.c`** - COMPLETE (~80 lines)
+- [x] **Extract `client_chat.c`** - COMPLETE (~900 lines)
+- [x] **Extract `client_visual.c`** - COMPLETE (~500 lines)
+- [x] **Extract `client_combat.c`** - COMPLETE (~900 lines)
+- [x] **Extract `client_inventory.c`** - COMPLETE (~1000 lines)
+- [x] **Extract `client_npc.c`** - COMPLETE (~1,835 lines, full NPC dialogs/menus/shops)
+- [x] **Extract `client_player.c`** - COMPLETE (~750 lines, exchange/status/refresh)
+- [x] **Update client.c includes** - COMPLETE (all module headers included)
 - [x] **Update Makefile** - COMPLETE (added all new .o files)
 - [x] **Test compilation** - COMPLETE (all servers build successfully)
 - [ ] **Test functionality**
@@ -164,20 +164,20 @@ RetroTK Server is a complete MMO game server implementation featuring:
 ##### Files Created
 | File | Status | Lines |
 |------|--------|-------|
-| `clif_crypto.h` | Complete | ~45 |
-| `clif_crypto.c` | Complete | ~80 |
-| `clif_chat.h` | Complete | ~70 |
-| `clif_chat.c` | Complete | ~900 |
-| `clif_visual.h` | Complete | ~55 |
-| `clif_visual.c` | Complete | ~500 |
-| `clif_combat.h` | Complete | ~50 |
-| `clif_combat.c` | Complete | ~900 |
-| `clif_inventory.h` | Complete | ~45 |
-| `clif_inventory.c` | Complete | ~1,000 |
-| `clif_npc.h` | Complete | ~45 |
-| `clif_npc.c` | Complete | ~1,835 |
-| `clif_player.h` | Complete | ~65 |
-| `clif_player.c` | Complete | ~750 |
+| `client_crypto.h` | Complete | ~45 |
+| `client_crypto.c` | Complete | ~80 |
+| `client_chat.h` | Complete | ~70 |
+| `client_chat.c` | Complete | ~900 |
+| `client_visual.h` | Complete | ~55 |
+| `client_visual.c` | Complete | ~500 |
+| `client_combat.h` | Complete | ~50 |
+| `client_combat.c` | Complete | ~900 |
+| `client_inventory.h` | Complete | ~45 |
+| `client_inventory.c` | Complete | ~1,000 |
+| `client_npc.h` | Complete | ~45 |
+| `client_npc.c` | Complete | ~1,835 |
+| `client_player.h` | Complete | ~65 |
+| `client_player.c` | Complete | ~750 |
 
 #### 1.2 sl.c (11,344 lines) - Lua Scripting Layer ✅
 > **Status**: COMPLETE (~8,135 lines extracted to 7 modules)
@@ -259,7 +259,7 @@ RetroTK Server is a complete MMO game server implementation featuring:
 - [x] **mob.c (2,411 lines)** - Mob AI, spawning, combat, movement - focused responsibility
 - [x] **command.c (1,694 lines)** - ~90 GM commands, small handlers - manageable as-is
 
-> **Assessment**: Unlike the 15K+ line clif.c and 11K+ line sl.c, these 2-3K line files are appropriately sized for their domain responsibilities. Splitting would fragment cohesive functionality without significant benefit.
+> **Assessment**: Unlike the 15K+ line client.c and 11K+ line sl.c, these 2-3K line files are appropriately sized for their domain responsibilities. Splitting would fragment cohesive functionality without significant benefit.
 
 ---
 
@@ -480,7 +480,7 @@ end
 - [x] **Create `crypto.conf`** - Externalized encryption keys
 - [x] **Update Makefiles** - Added server_config.o build rules
 - [x] **Integrate config system into map.c** - Config initialization added
-- [x] **Update clif.c to use config** - Encryption key functions use config API
+- [x] **Update client.c to use config** - Encryption key functions use config API
 
 ---
 
@@ -521,7 +521,7 @@ rtk/src/
 │   └── malloc.c     # Memory management (134 lines)
 ├── login/           # Login server
 │   ├── login.c      # Main login logic
-│   ├── clif.c       # Login client interface
+│   ├── client.c       # Login client interface
 │   └── intif.c      # Inter-server communication
 ├── char/            # Character server
 │   ├── char.c       # Main char logic
@@ -529,7 +529,7 @@ rtk/src/
 │   ├── mapif.c      # Map server interface
 │   └── saveif.c     # Save interface
 ├── map/             # Map server (MAIN REFACTOR TARGET)
-│   ├── clif.c       # CLIENT INTERFACE (15,731 lines) <<<
+│   ├── client.c       # CLIENT INTERFACE (15,731 lines) <<<
 │   ├── sl.c         # LUA SCRIPTING (11,344 lines) <<<
 │   ├── map.c        # World management (3,006 lines)
 │   ├── pc.c         # Player character (2,998 lines)
@@ -571,7 +571,7 @@ rtklua/
 
 ### Dependency Flow
 ```
-clif.c ──────────────┐
+client.c ──────────────┐
                      ├──> map.c ──┐
 sl.c ────────────────┤            ├──> pc.c ────┐
                      ├──> mob.c   │             ├──> db.c
@@ -614,9 +614,9 @@ From sl.c:
 ALL PHASES COMPLETE - Ready for commit
 
 ### Completed Work
-**Phase 1.1 - clif.c Refactoring** (COMPLETE)
-- Split 15,731-line clif.c into 8 focused modules
-- Created: clif_crypto, clif_chat, clif_visual, clif_combat, clif_inventory, clif_npc, clif_player
+**Phase 1.1 - client.c Refactoring** (COMPLETE)
+- Split 15,731-line client.c into 8 focused modules
+- Created: client_crypto, client_chat, client_visual, client_combat, client_inventory, client_npc, client_player
 - All headers use map.h for type definitions (USER, MOB, block_list)
 - Makefile updated with CLIF_OBJ variable
 - All servers compile successfully
@@ -740,10 +740,10 @@ ALL PHASES COMPLETE - Ready for commit
   - config_load_crypto() - Load crypto configuration
   - config_is_client_key1_packet() - Encryption method checks
   - config_dump() - Debug dump configuration
-- Created crypto.conf (30 lines) - Externalized encryption keys from clif.c
+- Created crypto.conf (30 lines) - Externalized encryption keys from client.c
 - Updated Makefiles - Added server_config.o to COMMON_OBJ
 - Integrated into map.c - config_init_defaults() + config_load_crypto() in do_init()
-- Updated clif.c - isKey() and isKey2() now use config_is_*_packet() API
+- Updated client.c - isKey() and isKey2() now use config_is_*_packet() API
 - Build verified - map-server compiles and links successfully (2MB)
 
 **Phase 4.2 - Memory Management** (COMPLETE)
@@ -903,7 +903,7 @@ make clean        # Clean all build artifacts
 
 ### Refactoring Complete Summary
 All major phases completed:
-- **Phase 1**: C file splitting (clif.c → 8 modules, sl.c → 7 modules)
+- **Phase 1**: C file splitting (client.c → 8 modules, sl.c → 7 modules)
 - **Phase 2**: Lua consolidation (~70% reduction, ~8,860 lines saved)
 - **Phase 3**: Architecture (config externalization, game state management)
 - **Phase 4**: Code quality (error handling, memory docs, protocol/API docs)

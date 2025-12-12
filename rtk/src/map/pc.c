@@ -14,11 +14,11 @@
 #include "../common/malloc.h"
 #include "../common/rndm.h"
 #include "script.h"
-#include "clif.h"
+#include "client.h"
 #include "itemdb.h"
 #include "pc.h"
 #include "timer.h"
-#include "sl.h"
+#include "lua_core.h"
 #include "db_mysql.h"
 #include "socket.h"
 #include "mob.h"
@@ -72,7 +72,7 @@ int pc_dropitemfull(USER* sd, struct item* fl2) {
 
 	if (!def[0]) {
 		map_additem(&fl->bl);
-		map_foreachinarea(clif_object_look_sub2, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, LOOK_SEND, &fl->bl);
+		map_foreachinarea(client_object_look_sub2, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, LOOK_SEND, &fl->bl);
 	}
 	else {
 		FREE(fl);
@@ -85,7 +85,7 @@ int pc_item_timer(int id, int none) {
 
 	nullpo_ret(1, fl = (FLOORITEM*)map_id2bl((unsigned int)id));
 
-	clif_lookgone(&fl->bl);
+	client_look_gone(&fl->bl);
 	map_delitem(fl->bl.id);
 	return 1;
 }
@@ -98,7 +98,7 @@ int pc_loadmagic(USER* sd) {
 
 	for (i = 0; i < MAX_SPELLS; i++) {
 		if (sd->status.skill[i] > 0) {
-			clif_sendmagic(sd, i);
+			client_sendmagic(sd, i);
 		}
 	}
 	return 0;
@@ -130,13 +130,13 @@ int pc_afktimer(int id, int none) {
 
 	if (sd->afk == 1 && sd->status.state == 0) {
 		sd->totalafktime += 10;
-		clif_sendaction(&sd->bl, 0x10, 0x4E, 0);
+		client_send_action(&sd->bl, 0x10, 0x4E, 0);
 		return 0;
 	}
 
 	if (sd->afk == 1 && sd->status.state == 3) {
 		sd->totalafktime += 10;
-		map_foreachinarea(clif_sendanimation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, 324, &sd->bl, 0);
+		map_foreachinarea(client_send_animation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, 324, &sd->bl, 0);
 		return 0;
 	}
 
@@ -150,11 +150,11 @@ int pc_afktimer(int id, int none) {
 	if (sd->afktime >= 30) { // AFK for greater than 30 seconds
 		if (sd->status.state == 0) {
 			sd->totalafktime += 300;
-			clif_sendaction(&sd->bl, 0x10, 0x4E, 0);
+			client_send_action(&sd->bl, 0x10, 0x4E, 0);
 		}
 		else if (sd->status.state == 3) {
 			sd->totalafktime += 300;
-			map_foreachinarea(clif_sendanimation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, 324, &sd->bl, 0);
+			map_foreachinarea(client_send_animation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, 324, &sd->bl, 0);
 		}
 
 		sd->afk = 1;
@@ -181,7 +181,7 @@ int pc_afktimer(int id, int none) {
 int pc_starttimer(USER* sd) {
 	sd->timer = timer_insert(1000, 1000, pc_timer, sd->bl.id, 0);
 	//sd->healingtimer=timer_insert(1000,1000,pc_healing,sd->bl.id,0);
-	//sd->heartbeat=timer_insert(10000,10000,clif_sendheartbeat,sd->bl.id,0);
+	//sd->heartbeat=timer_insert(10000,10000,client_sendheartbeat,sd->bl.id,0);
 	sd->pongtimer = timer_insert(30000, 30000, pc_sendpong, sd->bl.id, 0);
 	sd->savetimer = timer_insert(60000, 60000, pc_savetimer, sd->bl.id, 0);
 	if (sd->status.gm_level < 50) {
@@ -261,9 +261,9 @@ int bl_duratimer(int id, int none) {
 
 				if (sd->status.dura_aether[x].duration <= 0) {
 					sd->status.dura_aether[x].duration = 0;
-					clif_send_duration(&sd->bl, sd->status.dura_aether[x].id, 0, map_id2sd(sd->status.dura_aether[x].caster_id));
+					client_send_duration(&sd->bl, sd->status.dura_aether[x].id, 0, map_id2sd(sd->status.dura_aether[x].caster_id));
 					sd->status.dura_aether[x].caster_id = 0;
-					map_foreachinarea(clif_sendanimation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd->status.dura_aether[x].animation, &sd->bl, -1);
+					map_foreachinarea(client_send_animation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd->status.dura_aether[x].animation, &sd->bl, -1);
 					sd->status.dura_aether[x].animation = 0;
 
 					if (sd->status.dura_aether[x].aether == 0) {
@@ -283,7 +283,7 @@ int bl_duratimer(int id, int none) {
 				sd->status.dura_aether[x].aether -= 1000;
 
 				if (sd->status.dura_aether[x].aether <= 0) {
-					clif_send_aether(&sd->bl, sd->status.dura_aether[x].id, 0);
+					client_send_aether(&sd->bl, sd->status.dura_aether[x].id, 0);
 
 					if (sd->status.dura_aether[x].duration == 0) {
 						sd->status.dura_aether[x].id = 0;
@@ -506,7 +506,7 @@ int bl_aethertimer(int id, int none) {
 			}
 
 			if (sd->status.dura_aether[x].aether <= 0) {
-				clif_send_aether(&sd->bl, sd->status.dura_aether[x].id, 0);
+				client_send_aether(&sd->bl, sd->status.dura_aether[x].id, 0);
 
 				if (sd->status.dura_aether[x].duration == 0) {
 					sd->status.dura_aether[x].id = 0;
@@ -529,7 +529,7 @@ int pc_reload_aether(USER* sd) {
 
 		if (p->id > 0) {
 			if (p->aether > 0) {
-				clif_send_aether(sd, p->id, p->aether / 1000);
+				client_send_aether(sd, p->id, p->aether / 1000);
 			}
 		}
 	}
@@ -549,7 +549,7 @@ int pc_magic_startup(USER* sd) {
 		if (p->id > 0) {
 			if (p->duration > 0) {
 				tsd = map_id2sd(p->caster_id);
-				clif_send_duration(sd, p->id, p->duration / 1000, map_id2sd(p->caster_id));
+				client_send_duration(sd, p->id, p->duration / 1000, map_id2sd(p->caster_id));
 
 				if (tsd != NULL) {
 					sd->target = p->caster_id;
@@ -564,7 +564,7 @@ int pc_magic_startup(USER* sd) {
 			}
 
 			if (p->aether > 0) {
-				clif_send_aether(sd, p->id, p->aether / 1000);
+				client_send_aether(sd, p->id, p->aether / 1000);
 			}
 		}
 	}
@@ -639,16 +639,16 @@ int pc_timer(int id, int none) {
 
 		if (sd->status.pkduration <= 0) {
 			sd->status.pk = 0;
-			clif_sendchararea(sd);
+			client_send_char_area(sd);
 		}
 	}
 
 	if (sd->group_count > 0) {
-		clif_grouphealth_update(sd);
+		client_grouphealth_update(sd);
 	}
 
 	if (reset) {
-		clif_getchararea(sd);
+		client_get_char_area(sd);
 	}
 
 	return 0;
@@ -693,7 +693,7 @@ int pc_timer(int id, int none) {
 	else if (sd->status.mp + (int)rate2 > sd->max_mp) sd->status.mp = sd->max_mp;
 	else sd->status.mp += (int)rate2;
 
-	if(sd->sendstatus_tick >= 25) clif_sendstatus(sd,SFLAG_HPMP);
+	if(sd->sendstatus_tick >= 25) client_send_status(sd,SFLAG_HPMP);
 
 	if (sd->sendstatus_tick >= 25) sd->sendstatus_tick = 1;
 	else sd->sendstatus_tick++;
@@ -748,14 +748,14 @@ int pc_givexp(USER* sd, unsigned int exp, unsigned int xprate) {
 	}
 	if (stack > 1) {
 		len = sprintf(xpstring, "You cannot gain experience while on top of other players.");
-		clif_sendminitext(sd, xpstring);
+		client_send_minitext(sd, xpstring);
 		return 0;
 	}
 
 	//afk check
 	if (sd->afk == 1) {
 		len = sprintf(xpstring, "You cannot gain experience while AFK.");
-		clif_sendminitext(sd, xpstring);
+		client_send_minitext(sd, xpstring);
 		return 0;
 	}
 
@@ -770,7 +770,7 @@ int pc_givexp(USER* sd, unsigned int exp, unsigned int xprate) {
 		else {
 			sd->status.exp = sd->status.exp + exp;
 		}
-		//clif_sendstatus(sd);
+		//client_send_status(sd);
 
 		return 0;
 	}
@@ -792,9 +792,9 @@ int pc_givexp(USER* sd, unsigned int exp, unsigned int xprate) {
 	len = sprintf(xpstring, "%u experience!", defaultxp);
 
 	pc_checklevel(sd);
-	clif_sendminitext(sd, xpstring);
-	clif_sendstatus(sd, SFLAG_XPMONEY);
-	clif_sendupdatestatus_onequip(sd);
+	client_send_minitext(sd, xpstring);
+	client_send_status(sd, SFLAG_XPMONEY);
+	client_sendupdatestatus_onequip(sd);
 	return 0;
 }
 
@@ -977,8 +977,8 @@ int pc_calcstat(USER* sd) {
 	if (sd->status.hp > sd->max_hp) sd->status.hp = sd->max_hp;
 	if (sd->status.mp > sd->max_mp) sd->status.mp = sd->max_mp;
 
-	clif_sendstatus(sd, SFLAG_FULLSTATS | SFLAG_HPMP | SFLAG_XPMONEY);
-	//map_foreachinarea(clif_updatestate, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
+	client_send_status(sd, SFLAG_FULLSTATS | SFLAG_HPMP | SFLAG_XPMONEY);
+	//map_foreachinarea(client_update_state, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
 	return 0;
 }
 
@@ -1087,7 +1087,7 @@ int pc_warp(USER* sd, int m, int x, int y) {
 		sd->status.dest_pos.x = x;
 		sd->status.dest_pos.y = y;
 
-		clif_transfer(sd, destsrv, m, x, y);
+		client_transfer(sd, destsrv, m, x, y);
 
 		return 0;
 	}
@@ -1134,17 +1134,17 @@ int pc_warp(USER* sd, int m, int x, int y) {
 	//music
 	//destroy
 	//get char info
-	clif_quit(sd);
+	client_quit(sd);
 	pc_setpos(sd, m, x, y);
-	clif_sendtime(sd);
-	//clif_sendmapinfo(sd);
-	clif_spawn(sd);
-	clif_refresh(sd);
-	//clif_sendxy(sd);
-	//clif_mob_look_start(sd);
-	//map_foreachinarea(clif_object_look_sub,sd->bl.m,sd->bl.x,sd->bl.y,SAMEAREA,BL_ALL,LOOK_GET,sd);
-	//clif_mob_look_close(sd);
-	//clif_getchararea(sd);
+	client_sendtime(sd);
+	//client_sendmapinfo(sd);
+	client_spawn(sd);
+	client_refresh(sd);
+	//client_send_xy(sd);
+	//client_mob_look_start(sd);
+	//map_foreachinarea(client_object_look_sub,sd->bl.m,sd->bl.x,sd->bl.y,SAMEAREA,BL_ALL,LOOK_GET,sd);
+	//client_mob_look_close(sd);
+	//client_get_char_area(sd);
 	if (m != oldmap) {
 		sl_doscript_blargs("mapEnter", NULL, 1, &sd->bl);
 	}
@@ -1176,7 +1176,7 @@ int pc_loaditem(USER* sd) {
 	int i;
 	for (i = 0; i < sd->status.maxinv; i++) {
 		if (sd->status.inventory[i].id) {
-			clif_sendadditem(sd, i);
+			client_send_add_item(sd, i);
 		}
 	}
 	return 0;
@@ -1187,7 +1187,7 @@ int pc_loadequip(USER* sd) {
 
 	for (i = 0; i < 14; i++) {
 		if (sd->status.equip[i].id > 0) {
-			clif_sendequip(sd, i);
+			client_send_equip(sd, i);
 		}
 	}
 	//sql_free_row();
@@ -1312,7 +1312,7 @@ int pc_additem(USER* sd, struct item* fl) {
 
 	if (fl->id == 0 && fl->amount)
 	{
-		//clif_Hacker(sd->status.name,"gold-bar-dupe");
+		//client_hacker(sd->status.name,"gold-bar-dupe");
 		//int DupeTimes=pc_readglobalreg(sd, RegStr) + 1;
 		//pc_setglobalreg(sd, RegStr, DupeTimes);
 		return 0;
@@ -1322,10 +1322,10 @@ int pc_additem(USER* sd, struct item* fl) {
 		if (itemdb_maxamount(fl->id) > 0) {
 			sprintf(errMsg, "(%s). You can't have more than (%i).", itemdb_name(fl->id), itemdb_maxamount(fl->id));
 			pc_dropitemfull(sd, fl);
-			clif_sendminitext(sd, errMsg);
+			client_send_minitext(sd, errMsg);
 		}
 		else {
-			clif_sendminitext(sd, map_msg[MAP_ERRITMFULL].message);
+			client_send_minitext(sd, map_msg[MAP_ERRITMFULL].message);
 			pc_dropitemfull(sd, fl);
 		}
 
@@ -1381,7 +1381,7 @@ int pc_additem(USER* sd, struct item* fl) {
 			fl->amount = 0;
 		}
 
-		clif_sendadditem(sd, num);
+		client_send_add_item(sd, num);
 		num = pc_isinvenspace(sd, fl->id, fl->owner, fl->real_name, fl->customLook, fl->customLookColor, fl->customIcon, fl->customIconColor);
 	} while (fl->amount && num < sd->status.maxinv);
 
@@ -1389,11 +1389,11 @@ int pc_additem(USER* sd, struct item* fl) {
 		if (itemdb_maxamount(fl->id) > 0) {
 			sprintf(errMsg, "(%s). You can't have more than (%i).", itemdb_name(fl->id), itemdb_maxamount(fl->id));
 			pc_dropitemfull(sd, fl);
-			clif_sendminitext(sd, errMsg);
+			client_send_minitext(sd, errMsg);
 		}
 		else {
 			pc_dropitemfull(sd, fl);
-			clif_sendminitext(sd, map_msg[MAP_ERRITMFULL].message);
+			client_send_minitext(sd, map_msg[MAP_ERRITMFULL].message);
 		}
 	}
 
@@ -1409,7 +1409,7 @@ int pc_additemnolog(USER* sd, struct item* fl) {
 
 	if (fl->id == 0 && fl->amount)
 	{
-		//clif_Hacker(sd->status.name,"gold-bar-dupe");
+		//client_hacker(sd->status.name,"gold-bar-dupe");
 		//int DupeTimes=pc_readglobalreg(sd, RegStr) + 1;
 		//pc_setglobalreg(sd, RegStr, DupeTimes);
 		return 0;
@@ -1419,10 +1419,10 @@ int pc_additemnolog(USER* sd, struct item* fl) {
 		if (itemdb_maxamount(fl->id) > 0) {
 			sprintf(errMsg, "(%s). You can't have more than (%i).", itemdb_name(fl->id), itemdb_maxamount(fl->id));
 			pc_dropitemfull(sd, fl);
-			clif_sendminitext(sd, errMsg);
+			client_send_minitext(sd, errMsg);
 		}
 		else {
-			clif_sendminitext(sd, map_msg[MAP_ERRITMFULL].message);
+			client_send_minitext(sd, map_msg[MAP_ERRITMFULL].message);
 			pc_dropitemfull(sd, fl);
 		}
 
@@ -1461,7 +1461,7 @@ int pc_additemnolog(USER* sd, struct item* fl) {
 			fl->amount = 0;
 		}
 
-		clif_sendadditem(sd, num);
+		client_send_add_item(sd, num);
 		num = pc_isinvenspace(sd, fl->id, fl->owner, fl->real_name, fl->customLook, fl->customLookColor, fl->customIcon, fl->customIconColor);
 	} while (fl->amount && num < sd->status.maxinv);
 
@@ -1469,11 +1469,11 @@ int pc_additemnolog(USER* sd, struct item* fl) {
 		if (itemdb_maxamount(fl->id) > 0) {
 			sprintf(errMsg, "(%s). You can't have more than (%i).", itemdb_name(fl->id), itemdb_maxamount(fl->id));
 			pc_dropitemfull(sd, fl);
-			clif_sendminitext(sd, errMsg);
+			client_send_minitext(sd, errMsg);
 		}
 		else {
 			pc_dropitemfull(sd, fl);
-			clif_sendminitext(sd, map_msg[MAP_ERRITMFULL].message);
+			client_send_minitext(sd, map_msg[MAP_ERRITMFULL].message);
 		}
 	}
 
@@ -1489,12 +1489,12 @@ int pc_delitem(USER* sd, int id, int amount, int type) {
 
 	if (sd->status.inventory[id].amount <= 0) {
 		memset(&sd->status.inventory[id], 0, sizeof(struct item));
-		clif_senddelitem(sd, id, type);
+		client_send_del_item(sd, id, type);
 	}
 	else {
 		sprintf(minitext, "%s (%d)", itemdb_name(sd->status.inventory[id].id), amount);
-		clif_sendminitext(sd, minitext);
-		clif_sendadditem(sd, id);
+		client_send_minitext(sd, minitext);
+		client_send_add_item(sd, id);
 	}
 
 	return 0;
@@ -1546,23 +1546,23 @@ int pc_equipitem(USER* sd, int id) {
 
 	if (sd->status.state != 0 && sd->status.gm_level == 0) {
 		if (sd->status.state == 1)
-			clif_sendminitext(sd, "Spirit's can't do that.");
+			client_send_minitext(sd, "Spirit's can't do that.");
 
 		/*if (sd->status.state == 2)
-		clif_sendminitext(sd,"You can't change armor while you are transformed.");*/
+		client_send_minitext(sd,"You can't change armor while you are transformed.");*/
 
 		if (sd->status.state == 3)
-			clif_sendminitext(sd, "You can't do that while riding a mount.");
+			client_send_minitext(sd, "You can't do that while riding a mount.");
 
 		if (sd->status.state == 4)
-			clif_sendminitext(sd, "You can't do that while transformed.");
+			client_send_minitext(sd, "You can't do that while transformed.");
 
 		return 0;
 	}
 
 	if (sd->status.inventory[id].owner) {
 		if (sd->status.inventory[id].owner != sd->bl.id) {
-			clif_sendminitext(sd, "This does not belong to you.");
+			client_send_minitext(sd, "This does not belong to you.");
 			return 0;
 		}
 	}
@@ -1570,7 +1570,7 @@ int pc_equipitem(USER* sd, int id) {
 	ret = pc_canequipitem(sd, id);
 
 	if (ret) {
-		clif_sendminitext(sd, map_msg[ret].message);
+		client_send_minitext(sd, map_msg[ret].message);
 		return 0;
 	}
 
@@ -1580,7 +1580,7 @@ int pc_equipitem(USER* sd, int id) {
 		return 0;
 
 	if (!pc_canequipstats(sd, sd->status.inventory[id].id)) {
-		clif_sendminitext(sd, "Your stats are too low to equip that.");
+		client_send_minitext(sd, "Your stats are too low to equip that.");
 		return 0;
 	}
 
@@ -1629,16 +1629,16 @@ pc_equipscript(USER* sd) {
 
 	if (sd->status.state != 0 && sd->status.gm_level == 0) {
 		if (sd->status.state == 1)
-			clif_sendminitext(sd, "Spirits can't do that.");
+			client_send_minitext(sd, "Spirits can't do that.");
 
 		if (sd->status.state == 2)
-			clif_sendminitext(sd, "You can't do that while transformed.");
+			client_send_minitext(sd, "You can't do that while transformed.");
 
 		if (sd->status.state == 3)
-			clif_sendminitext(sd, "You can't do that while riding a mount.");
+			client_send_minitext(sd, "You can't do that while riding a mount.");
 
 		if (sd->status.state == 4)
-			clif_sendminitext(sd, "You can't do that while transformed.");
+			client_send_minitext(sd, "You can't do that while transformed.");
 
 		return 0;
 	}
@@ -1674,15 +1674,15 @@ pc_equipscript(USER* sd) {
 		sd->flank = 0;
 		sd->backstab = 0;
 		char text[] = "Your weapon loses its enchantment.";
-		clif_sendminitext(sd, text);
+		client_send_minitext(sd, text);
 	}
 
-	clif_sendequip(sd, ret);
+	client_send_equip(sd, ret);
 	sd->status.equip[ret].amount = 1;
 
 	pc_calcstat(sd);
-	clif_sendupdatestatus_onequip(sd);
-	map_foreachinarea(clif_updatestate, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
+	client_sendupdatestatus_onequip(sd);
+	map_foreachinarea(client_update_state, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
 	return 0;
 }
 
@@ -1721,7 +1721,7 @@ int pc_unequipscript(USER* sd) {
 
 		pc_delitem(sd, sd->invslot, 1, 6);
 		pc_additem(sd, &it);
-		clif_sendequip(sd, type);
+		client_send_equip(sd, type);
 		sd->status.equip[type].amount = 1;
 	}
 	else {
@@ -1750,17 +1750,17 @@ int pc_unequipscript(USER* sd) {
 		sd->flank = 0;
 		sd->backstab = 0;
 		char text[] = "Your weapon loses its enchantment.";
-		clif_sendminitext(sd, text);
+		client_send_minitext(sd, text);
 	}
 
 	sl_doscript_simple(itemdb_yname(takeoff), "unequip", &sd->bl);
 
 	sd->takeoffid = -1;
 	pc_calcstat(sd);
-	clif_sendupdatestatus_onequip(sd);
-	map_foreachinarea(clif_updatestate, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
+	client_sendupdatestatus_onequip(sd);
+	map_foreachinarea(client_update_state, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
 	//if (type > 0 && type < 15)
-	//	map_foreachinarea(clif_updatestate,sd->bl.m,sd->bl.x,sd->bl.y,AREA,BL_PC,sd);
+	//	map_foreachinarea(client_update_state,sd->bl.m,sd->bl.x,sd->bl.y,AREA,BL_PC,sd);
 	return 0;
 }
 
@@ -1772,8 +1772,8 @@ int pc_getitemscript(USER* sd, int id) {
 
 	if (fl->data.id == 0) {
 		sd->status.money += fl->data.amount;
-		clif_sendstatus(sd, SFLAG_XPMONEY);
-		clif_lookgone(&fl->bl);
+		client_send_status(sd, SFLAG_XPMONEY);
+		client_look_gone(&fl->bl);
 		map_delitem(fl->bl.id);
 		Sql_EscapeString(sql_handle, escape, fl->data.real_name);
 
@@ -1786,7 +1786,7 @@ int pc_getitemscript(USER* sd, int id) {
 	}
 
 	if (itemdb_droppable(fl->data.id) && !sd->status.gm_level) {
-		clif_sendminitext(sd, "That item cannot be picked up.");
+		client_send_minitext(sd, "That item cannot be picked up.");
 		return 0;
 	}
 
@@ -1814,7 +1814,7 @@ int pc_getitemscript(USER* sd, int id) {
 	}
 
 	if (fl->data.amount <= 0) {
-		clif_lookgone(&fl->bl);
+		client_look_gone(&fl->bl);
 		map_delitem(fl->bl.id);
 	}
 
@@ -1886,7 +1886,7 @@ int pc_dropitemmap(USER* sd, int id, int type) {
 	if (!sd->status.inventory[id].id)
 		return 0;
 
-	if (sd->status.inventory[id].amount <= 0) { clif_senddelitem(sd, id, 1); return 0; }
+	if (sd->status.inventory[id].amount <= 0) { client_send_del_item(sd, id, 1); return 0; }
 
 	int def[2];
 
@@ -1919,7 +1919,7 @@ int pc_dropitemmap(USER* sd, int id, int type) {
 		}*/
 
 		memset(&sd->status.inventory[id], 0, sizeof(struct item));
-		clif_senddelitem(sd, id, 1);
+		client_send_del_item(sd, id, 1);
 	}
 	else {
 		Sql_EscapeString(sql_handle, escape, fl->data.real_name);
@@ -1930,7 +1930,7 @@ int pc_dropitemmap(USER* sd, int id, int type) {
 		}*/
 
 		fl->data.amount = 1;
-		clif_sendadditem(sd, id);
+		client_send_add_item(sd, id);
 	}
 
 	map_foreachincell(pc_npc_drop, sd->bl.m, sd->bl.x, sd->bl.y, BL_NPC, fl, sd);
@@ -1939,7 +1939,7 @@ int pc_dropitemmap(USER* sd, int id, int type) {
 		map_additem(&fl->bl);
 
 		sl_doscript_blargs("characterLog", "dropWrite", 2, &sd->bl, &fl->bl);
-		map_foreachinarea(clif_object_look_sub2, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, LOOK_SEND, &fl->bl);
+		map_foreachinarea(client_object_look_sub2, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, LOOK_SEND, &fl->bl);
 	}
 	else {
 		FREE(fl);
@@ -1957,13 +1957,13 @@ int pc_changeitem(USER* sd, int id1, int id2) {
 	memcpy(&sd->status.inventory[id1], &tmp, sizeof(struct item));
 	if (sd->status.inventory[id1].id) {
 		if (!sd->status.inventory[id2].id)
-			clif_senddelitem(sd, id2, 0);
-		clif_sendadditem(sd, id1);
+			client_send_del_item(sd, id2, 0);
+		client_send_add_item(sd, id1);
 	}
 	if (sd->status.inventory[id2].id) {
 		if (!sd->status.inventory[id1].id)
-			clif_senddelitem(sd, id1, 0);
-		clif_sendadditem(sd, id2);
+			client_send_del_item(sd, id1, 0);
+		client_send_add_item(sd, id2);
 	}
 	return 0;
 }
@@ -1977,7 +1977,7 @@ int pc_useitem(USER* sd, int id) {
 
 	if (sd->status.inventory[id].owner) {
 		if (sd->status.inventory[id].owner != sd->status.id) {
-			clif_sendminitext(sd, "You cannot use this, it does not belong to you!");
+			client_send_minitext(sd, "You cannot use this, it does not belong to you!");
 			return 0;
 		}
 	}
@@ -1987,7 +1987,7 @@ int pc_useitem(USER* sd, int id) {
 		if (sd->status.equip[type].id > 0 && !sd->status.gm_level) {
 			if (itemdb_unequip(sd->status.equip[type].id) == 1) {
 				char text[] = "You are unable to unequip that.";
-				clif_sendminitext(sd, text);
+				client_send_minitext(sd, text);
 				return 0;
 			}
 		}
@@ -2002,7 +2002,7 @@ int pc_useitem(USER* sd, int id) {
 		else if (itemdb_class(sd->status.inventory[id].id) < 6) {
 			// If subpath base class is same as not item's required base path
 			if (classdb_path(sd->status.class) != itemdb_class(sd->status.inventory[id].id)) {
-				clif_sendminitext(sd, map_msg[MAP_ERRITMPATH].message);
+				client_send_minitext(sd, map_msg[MAP_ERRITMPATH].message);
 				return 0;
 			}
 			// If Item's Class requirement is over 5 (subpath restricted)
@@ -2010,17 +2010,17 @@ int pc_useitem(USER* sd, int id) {
 		else {
 			// If player class is not class required by item
 			if (sd->status.class != itemdb_class(sd->status.inventory[id].id)) {
-				clif_sendminitext(sd, map_msg[MAP_ERRITMPATH].message);
+				client_send_minitext(sd, map_msg[MAP_ERRITMPATH].message);
 				return 0;
 			}
 		}
 		if (sd->status.mark < itemdb_rank(sd->status.inventory[id].id)) {
-			clif_sendminitext(sd, map_msg[MAP_ERRITMMARK].message);
+			client_send_minitext(sd, map_msg[MAP_ERRITMMARK].message);
 			return 0;
 		}
 	}
 	if (sd->status.state == PC_DIE) {
-		clif_sendminitext(sd, map_msg[MAP_ERRGHOST].message);
+		client_send_minitext(sd, map_msg[MAP_ERRGHOST].message);
 		return 0;
 	}
 	if (sd->status.state == PC_MOUNTED) {
@@ -2030,7 +2030,7 @@ int pc_useitem(USER* sd, int id) {
 			return 0;
 		}
 
-		clif_sendminitext(sd, map_msg[MAP_ERRMOUNT].message);
+		client_send_minitext(sd, map_msg[MAP_ERRMOUNT].message);
 		return 0;
 	}
 
@@ -2044,7 +2044,7 @@ int pc_useitem(USER* sd, int id) {
 	case ITM_EAT:
 
 		if (!map[sd->bl.m].canEat && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot eat this here.");
+			client_send_minitext(sd, "You cannot eat this here.");
 			return 0;
 		}
 
@@ -2064,7 +2064,7 @@ int pc_useitem(USER* sd, int id) {
 		break;
 	case ITM_USE: // 1
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2085,7 +2085,7 @@ int pc_useitem(USER* sd, int id) {
 
 	case ITM_USESPC: // 18
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2105,7 +2105,7 @@ int pc_useitem(USER* sd, int id) {
 	case ITM_BAG: // 21
 
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2125,7 +2125,7 @@ int pc_useitem(USER* sd, int id) {
 	case ITM_MAP: // 22
 
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2146,7 +2146,7 @@ int pc_useitem(USER* sd, int id) {
 	case ITM_QUIVER: // 23
 
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2161,17 +2161,17 @@ int pc_useitem(USER* sd, int id) {
 		if(sd->status.inventory[id].dura==0) {
 			pc_delitem(sd,id,1,3);
 		} else {
-			clif_sendadditem(sd,id);
+			client_send_add_item(sd,id);
 		}*/
 
-		clif_sendminitext(sd, "This item is only usable with a bow.");
+		client_send_minitext(sd, "This item is only usable with a bow.");
 
 		break;
 
 	case ITM_MOUNT: // 24
 
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2185,7 +2185,7 @@ int pc_useitem(USER* sd, int id) {
 	case ITM_FACE: // 25
 
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2200,7 +2200,7 @@ int pc_useitem(USER* sd, int id) {
 	case ITM_SET: // 26
 
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2215,7 +2215,7 @@ int pc_useitem(USER* sd, int id) {
 	case ITM_SKIN: // 27
 
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2230,7 +2230,7 @@ int pc_useitem(USER* sd, int id) {
 	case ITM_HAIR_DYE: // 28
 
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2245,7 +2245,7 @@ int pc_useitem(USER* sd, int id) {
 	case ITM_FACEACCTWO: // 29
 
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2259,7 +2259,7 @@ int pc_useitem(USER* sd, int id) {
 
 	case ITM_SMOKE:
 		if (!map[sd->bl.m].canSmoke && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot smoke this here.");
+			client_send_minitext(sd, "You cannot smoke this here.");
 			return 0;
 		}
 
@@ -2283,7 +2283,7 @@ int pc_useitem(USER* sd, int id) {
 			pc_delitem(sd, id, 1, 3);
 		}
 		else {
-			clif_sendadditem(sd, id);
+			client_send_add_item(sd, id);
 		}
 		break;
 
@@ -2302,13 +2302,13 @@ int pc_useitem(USER* sd, int id) {
 	case ITM_CROWN:
 	case ITM_MANTLE:
 	case ITM_NECKLACE:
-		if (!map[sd->bl.m].canEquip && !sd->status.gm_level) { clif_sendminitext(sd, "You cannot equip/de-equip on this map."); return 0; }
+		if (!map[sd->bl.m].canEquip && !sd->status.gm_level) { client_send_minitext(sd, "You cannot equip/de-equip on this map."); return 0; }
 
 		pc_equipitem(sd, id);
 		break;
 	case ITM_ETC:
 		if (!map[sd->bl.m].canUse && !sd->status.gm_level) {
-			clif_sendminitext(sd, "You cannot use this here.");
+			client_send_minitext(sd, "You cannot use this here.");
 			return 0;
 		}
 
@@ -2569,7 +2569,7 @@ int pc_setparam(USER* sd, int type, int val) {
 		sd->max_mp = val;
 		break;
 	}
-	clif_sendupdatestatus(sd);
+	client_sendupdatestatus(sd);
 	return 0;
 }
 
@@ -2608,21 +2608,21 @@ int pc_diescript(USER* sd) {
 			tsd->status.pk = 1;
 			//tsd->status.killspk = 1;
 			tsd->status.pkduration = 600000;
-			clif_sendchararea(tsd);
+			client_send_char_area(tsd);
 			sprintf(msg, "You have killed %s unwarranted and now have PK status.", sd->status.name);
-			clif_sendminitext(tsd, msg);
+			client_send_minitext(tsd, msg);
 		} else if (tsd->status.pk > 0 && sd->status.pk == 0 && exist != -1) {
 			//tsd->status.killspk += 1;
 			tsd->status.pkduration += 600000;
 			sprintf(msg, "You have killed %s unwarranted and extended your PK status.", sd->status.name);
-			clif_sendminitext(tsd, msg);
+			client_send_minitext(tsd, msg);
 		} else if (map[tsd->bl.m].pvp == 1) {
 			//tsd->killspvp += 1;
 		}
 
 		if (sd->status.state!=1) {
 			sprintf(slain,"%s %s has been vanquished by %s %s",classdb_name(sd->status.class,sd->status.mark),sd->status.name,classdb_name(tsd->status.class,tsd->status.mark),tsd->status.name);
-			clif_broadcast(slain,sd->bl.m);
+			client_broadcast(slain,sd->bl.m);
 		}
 
 		//if (tsd->status.killspk >= 4) {
@@ -2640,9 +2640,9 @@ int pc_diescript(USER* sd) {
 			if (magicdb_dispel(id) > 0) continue;
 
 			sd->status.dura_aether[i].duration = 0;
-			clif_send_duration(sd, sd->status.dura_aether[i].id, 0, map_id2sd(sd->status.dura_aether[i].caster_id));
+			client_send_duration(sd, sd->status.dura_aether[i].id, 0, map_id2sd(sd->status.dura_aether[i].caster_id));
 			sd->status.dura_aether[i].caster_id = 0;
-			map_foreachinarea(clif_sendanimation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd->status.dura_aether[i].animation, &sd->bl, -1);
+			map_foreachinarea(client_send_animation, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd->status.dura_aether[i].animation, &sd->bl, -1);
 			sd->status.dura_aether[i].animation = 0;
 
 			if (sd->status.dura_aether[i].aether == 0) {
@@ -2720,19 +2720,19 @@ int pc_diescript(USER* sd) {
 	sd->dmgshield = 0;
 
 	pc_calcstat(sd);
-	map_foreachinarea(clif_updatestate, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
-	//clif_sendchararea(sd);
+	map_foreachinarea(client_update_state, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
+	//client_send_char_area(sd);
 	return 0;
 }
 
 int pc_res(USER* sd) {
 	sd->status.state = PC_ALIVE;
 	sd->status.hp = 100;
-	clif_sendstatus(sd, SFLAG_HPMP);
-	//clif_sendupdatestatus(sd);
+	client_send_status(sd, SFLAG_HPMP);
+	//client_sendupdatestatus(sd);
 	pc_warp(sd, sd->bl.m, sd->bl.x, sd->bl.y);
-	//map_foreachinarea(clif_updatestate,sd->bl.m,sd->bl.x,sd->bl.y,AREA,BL_PC,sd);
-	//clif_sendchararea(sd);
+	//map_foreachinarea(client_update_state,sd->bl.m,sd->bl.x,sd->bl.y,AREA,BL_PC,sd);
+	//client_send_char_area(sd);
 	return 0;
 }
 
@@ -2782,7 +2782,7 @@ int pc_heal(USER* sd, int hp, int mp, int caster) {
 		pc_die(sd);
 	}
 	else {
-		clif_sendupdatestatus(sd);
+		client_sendupdatestatus(sd);
 	}
 	return 0;
 }
@@ -2921,7 +2921,7 @@ int pc_scripttimer(int id, int none) {
 	nullpo_ret(1, sd = map_id2sd((unsigned int)id));
 	//if (session[sd->fd]
 	if (sd->selfbar) {
-		clif_send_selfbar(sd);
+		client_send_selfbar(sd);
 	}
 
 	if (sd->groupbars && sd->group_count > 1) {
@@ -2929,14 +2929,14 @@ int pc_scripttimer(int id, int none) {
 			tsd = map_id2sd(groups[sd->groupid][x]);
 
 			if (tsd->bl.m == sd->bl.m) {
-				clif_send_groupbars(sd, tsd);
-				clif_grouphealth_update(sd);
+				client_send_groupbars(sd, tsd);
+				client_grouphealth_update(sd);
 			}
 		}
 	}
 
 	if (sd->mobbars) {
-		map_foreachinarea(clif_send_mobbars, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_MOB, sd);
+		map_foreachinarea(client_send_mobbars, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_MOB, sd);
 	}
 
 	if (sd->status.hp <= 0 && sd->deathflag) {
@@ -2945,7 +2945,7 @@ int pc_scripttimer(int id, int none) {
 	}
 
 	if (sd->dmgshield > 0) {
-		clif_send_duration(sd, 0, (unsigned int)sd->dmgshield + 1, NULL);
+		client_send_duration(sd, 0, (unsigned int)sd->dmgshield + 1, NULL);
 	}
 
 	sd->deathflag = 0;

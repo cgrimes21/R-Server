@@ -9,7 +9,7 @@
 #include "version.h"
 #include "login.h"
 #include "crypt.h"
-#include "clif.h"
+#include "login_client.h"
 #include "zlib.h"
 #include "db_mysql.h"
 #include "db.h"
@@ -275,8 +275,8 @@ int do_init(int argc, char** argv) {
 	add_log("");
 	add_log("RetroTK Login Server Started.\n");
 
-	set_defaultaccept(clif_accept);
-	set_defaultparse(clif_parse);
+	set_defaultaccept(login_client_accept);
+	set_defaultparse(login_client_parse);
 	login_fd = make_listen_port(login_port);
 	timer_insert(10 * 60 * 1000, 10 * 60 * 1000, Remove_Throttle, 0, 0);
 	//Lockout DB

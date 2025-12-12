@@ -68,7 +68,7 @@ This codebase underwent a comprehensive modernization effort to improve maintain
 
 | Phase | Description | Result |
 |-------|-------------|--------|
-| **Phase 1** | C File Modularization | clif.c → 8 modules, sl.c → 7 modules |
+| **Phase 1** | C File Modularization | client.c → 8 modules, sl.c → 7 modules |
 | **Phase 2** | Lua Consolidation | **70% reduction** (~8,860 lines saved) |
 | **Phase 3** | Architecture | Centralized config & state management |
 | **Phase 4** | Code Quality | Error handling, memory docs, API docs |
@@ -77,17 +77,17 @@ This codebase underwent a comprehensive modernization effort to improve maintain
 
 Split massive C files into focused, maintainable modules:
 
-**clif.c (15,731 lines → 8 modules)**
+**client.c (15,731 lines → 8 modules)**
 | Module | Lines | Purpose |
 |--------|-------|---------|
-| `clif_crypto.c` | 80 | Packet encryption/decryption |
-| `clif_chat.c` | 900 | Chat, whispers, broadcasts |
-| `clif_visual.c` | 500 | Animations, movement display |
-| `clif_combat.c` | 900 | Health bars, damage, attacks |
-| `clif_inventory.c` | 1,000 | Items, equipment, durability |
-| `clif_npc.c` | 1,835 | NPC dialogs, menus, shops |
-| `clif_player.c` | 750 | Status, groups, exchange |
-| `clif.c` | ~9,000 | Core packet routing |
+| `client_crypto.c` | 80 | Packet encryption/decryption |
+| `client_chat.c` | 900 | Chat, whispers, broadcasts |
+| `client_visual.c` | 500 | Animations, movement display |
+| `client_combat.c` | 900 | Health bars, damage, attacks |
+| `client_inventory.c` | 1,000 | Items, equipment, durability |
+| `client_npc.c` | 1,835 | NPC dialogs, menus, shops |
+| `client_player.c` | 750 | Status, groups, exchange |
+| `client.c` | ~9,000 | Core packet routing |
 
 **sl.c (11,344 lines → 7 modules)**
 | Module | Lines | Purpose |
@@ -154,7 +154,7 @@ RTK-Server/
 │   │   ├── login/          # Login server
 │   │   ├── char/           # Character server
 │   │   └── map/            # Map server (main game logic)
-│   │       ├── clif*.c     # Client interface modules
+│   │       ├── client*.c   # Client interface modules
 │   │       ├── sl*.c       # Lua scripting modules
 │   │       ├── pc.c        # Player character
 │   │       ├── mob.c       # Mob AI
