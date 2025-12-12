@@ -21,6 +21,7 @@
 #include "lua_blocklist.h"
 #include "lua_registry.h"
 #include "lua_mob.h"
+#include "malloc.h"  /* nullpo_ret macro */
 
 /*==============================================================================
  * Mob Type Declaration

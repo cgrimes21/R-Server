@@ -17,13 +17,14 @@
 #include "core.h"
 #include "map.h"
 #include "socket.h"
+#include "crypt.h"  /* SWAP16, SWAP32 */
 #include "malloc.h"
 #include "mmo.h"
 #include "pc.h"
 #include "mob.h"
 #include "npc.h"
 #include "itemdb.h"
-#include "sl.h"
+#include "lua_core.h"
 
 /* ========== Animation Functions ========== */
 

@@ -38,12 +38,24 @@
 
 #include "timer.h"
 #include "socket.h"
+#include "crypt.h"  /* SWAP16, SWAP32 */
 #include "db_mysql.h"
 #include "malloc.h"  /* includes nullpo_ret macro */
 
 /* External declarations */
 extern Sql* sql_handle;
 extern int xp_rate;
+
+/* External type classes */
+extern lua_type_class biteml_type;
+extern lua_type_class bankiteml_type;
+extern lua_type_class parcell_type;
+
+/* Pushinst macros for type instantiation */
+#define lua_player_pushinst(state, sd) lua_type_pushinst(state, &lua_player_type, sd, 0)
+#define biteml_pushinst(state, bitem) lua_type_pushinst(state, &biteml_type, bitem, 0)
+#define bankiteml_pushinst(state, bankitem) lua_type_pushinst(state, &bankiteml_type, bankitem, 0)
+#define parcell_pushinst(state, parcel) lua_type_pushinst(state, &parcell_type, parcel, 0)
 
 /* Player type class definition */
 lua_type_class lua_player_type;

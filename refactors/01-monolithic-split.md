@@ -1,11 +1,26 @@
 # Refactor 01: Monolithic File Split
 
 **Date:** December 2025
-**Status:** Complete
+**Status:** Reverted
 
 ## Overview
 
-Split massive monolithic C files into focused, maintainable modules.
+Attempted split of massive monolithic C files into focused modules.
+
+## Outcome
+
+Split files were created but the original monolithic files (`client.c`, `lua_core.c`) were never pruned. This resulted in duplicate function definitions. The split files have been **removed** as of December 12, 2025.
+
+### Why Reverted
+1. Split files had duplicate functions with the originals
+2. Naming conventions differed between split files and originals
+3. Simpler to maintain single monolithic files with backward compatibility macros
+
+### Current State
+- `client.c` (~15,700 lines) - Monolithic client layer
+- `lua_core.c` (~11,200 lines) - Monolithic Lua binding layer
+- `lua_types.c` (~200 lines) - Separate module (kept, not duplicated)
+- Headers contain backward compatibility `#define` macros
 
 ## Changes
 

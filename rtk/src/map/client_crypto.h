@@ -45,4 +45,8 @@ int client_encrypt(int fd);
  */
 int client_decrypt(int fd);
 
+/* Backward compatibility macros */
+#define isKey client_is_key
+#define isKey2 client_is_key2
+
 #endif /* _CLIENT_CRYPTO_H_ */

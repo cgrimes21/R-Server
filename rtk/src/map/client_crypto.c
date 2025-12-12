@@ -13,8 +13,10 @@
 #include "socket.h"
 #include "crypt.h"
 #include "map.h"
+#include "malloc.h"
+#include "server_config.h"
 
-/* Encryption key arrays */
+/* Encryption key arrays - kept for reference/fallback */
 const unsigned char clkey2[] = { 6,8,9,10,15,19,23,26,28,41,45,46,50,57 };
 const unsigned char svkey2[] = { 4,7,8,11,12,19,23,24,51,54,57,64,99 };
 const unsigned char svkey1packets[] = { 2,3,10,64,68,94,96,98,102,111 };
@@ -22,25 +24,16 @@ const unsigned char clkey1packets[] = { 2,3,4,11,21,38,58,66,67,75,80,87,98,113,
 
 int client_is_key2(int fd)
 {
-	int x = 0;
-	for (x = 0; x < (sizeof(clkey1packets) / sizeof(clkey1packets[0])); x++)
-	{
-		if (fd == clkey1packets[x])
-			return 0;
-	}
-
-	return 1;
+	/* Returns 1 if packet uses key2, 0 if packet uses key1 */
+	/* Uses centralized config system for packet key mapping */
+	return !config_is_client_key1_packet(fd);
 }
 
 int client_is_key(int fd)
 {
-	int x = 0;
-	for (x = 0; x < (sizeof(svkey1packets) / sizeof(svkey1packets[0])); x++)
-	{
-		if (fd == svkey1packets[x])
-			return 0;
-	}
-	return 1;
+	/* Returns 1 if packet uses key2, 0 if packet uses key1 */
+	/* Uses centralized config system for packet key mapping */
+	return !config_is_server_key1_packet(fd);
 }
 
 int client_encrypt(int fd)

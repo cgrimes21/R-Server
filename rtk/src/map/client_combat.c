@@ -25,8 +25,10 @@
 #include "pc.h"
 #include "itemdb.h"
 #include "magic.h"
-#include "sl.h"
+#include "lua_core.h"
 #include "socket.h"
+#include "crypt.h"  /* SWAP16, SWAP32 */
+#include "rndm.h"   /* rnd function */
 #include "malloc.h"
 #include "db_mysql.h"
 

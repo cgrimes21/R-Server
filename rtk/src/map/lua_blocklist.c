@@ -19,27 +19,23 @@
 #include "itemdb.h"
 #include "npc.h"
 #include "socket.h"
+#include "crypt.h"  /* SWAP16, SWAP32 */
 #include "malloc.h"
 #include "db_mysql.h"
 
-/* External type references from sl.c */
-extern lua_type_class pcl_type;
-extern lua_type_class mobl_type;
-extern lua_type_class npcl_type;
+/* External type references - correct names */
+extern lua_type_class lua_player_type;  /* defined in lua_player.c */
+extern lua_type_class lua_mob_type;     /* defined in lua_mob.c */
+extern lua_type_class nlua_player_type; /* defined in lua_core.c */
 extern lua_type_class fll_type;
 
-/* External function references */
-extern void sl_checkargs(lua_State*, char* fmt);
-extern int sl_doscript_blargs(char*, char*, int, ...);
-extern unsigned int* mobspawn_onetime(int, int, int, int, unsigned int, int, int, int, unsigned int);
-extern void mob_respawn(MOB*);
-extern int mobdb_id(const char*);
-extern void mobdb_dropitem(unsigned int, unsigned int, unsigned int, int, int, int, int, int, int, USER*);
-extern int client_object_can_move_from(int, int, int, int);
+/* Type aliases for compatibility */
+#define pcl_type lua_player_type
+#define mobl_type lua_mob_type
+#define npcl_type nlua_player_type
 
-/* Macros from sl.c */
-#define sl_memberself 1
-#define sl_memberarg(i) (sl_memberself + i)
+/* External function references - now in lua_core.h and mob.h */
+extern int client_object_can_move_from(int, int, int, int);
 
 /*============================================================
  * Object Spawning

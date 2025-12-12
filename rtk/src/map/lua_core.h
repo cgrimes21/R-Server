@@ -19,6 +19,9 @@
 /* Global Lua state */
 extern lua_State* lua_gstate;
 
+/* Argument checking - defined in lua_core.c */
+void sl_checkargs(lua_State* state, char* fmt);
+
 /* Initialization */
 void lua_binding_init();
 
@@ -38,6 +41,8 @@ void lua_resume_dialog(unsigned int, USER*);
 void lua_resume_buy(char*, USER*);
 void lua_resume_input(char*, char*, USER*);
 void lua_resume_sell(unsigned int, USER*);
+void lua_resume_menuseq(unsigned int selection, int choice, USER* sd);
+void lua_resume_inputseq(unsigned int choice, char* input, USER* sd);
 
 /* Direct Lua execution */
 void lua_exec(USER*, char*);
@@ -65,6 +70,8 @@ void lua_fixmem();
 #define sl_resumebuy lua_resume_buy
 #define sl_resumeinput lua_resume_input
 #define sl_resumesell lua_resume_sell
+#define sl_resumemenuseq lua_resume_menuseq
+#define sl_resumeinputseq lua_resume_inputseq
 #define sl_exec lua_exec
 #define sl_async_freeco lua_async_freeco
 #define sl_reload lua_reload

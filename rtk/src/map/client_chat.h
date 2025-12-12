@@ -69,4 +69,9 @@ int client_gui_text_sd(char* msg, USER* sd);
 /* Helper functions */
 int client_distance(struct block_list* bl, struct block_list* bl2);
 
+/* Backward compatibility macros */
+#define client_broadcasttogm client_broadcast_to_gm
+#define client_broadcasttogm_sub client_broadcast_to_gm_sub
+#define client_gui_textsd client_gui_text_sd
+
 #endif /* _CLIENT_CHAT_H_ */

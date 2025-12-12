@@ -6,10 +6,10 @@ This folder tracks all major refactoring efforts on the RTK Server codebase.
 
 | # | Name | Date | Status | Description |
 |---|------|------|--------|-------------|
-| 01 | [Monolithic Split](01-monolithic-split.md) | Dec 2025 | Complete | Split clif.c (15K lines) and sl.c (11K lines) into focused modules |
+| 01 | [Monolithic Split](01-monolithic-split.md) | Dec 2025 | Complete | All split files integrated, ~9,600 lines removed from monolithic files |
 | 02 | [Lua Consolidation](02-lua-consolidation.md) | Dec 2025 | Complete | 70% reduction in Lua code through data-driven patterns |
-| 03 | [Client Layer Rename](03-client-layer-rename.md) | Dec 2025 | Complete | clif_* → client_* (16 files, ~180 functions) |
-| 04 | [Lua Layer Rename](04-lua-layer-rename.md) | Dec 2025 | Complete | sl_* → lua_* (16 files, ~350 functions) |
+| 03 | [Client Layer Rename](03-client-layer-rename.md) | Dec 2025 | Complete | clif_* → client_* (headers renamed, compat macros added) |
+| 04 | [Lua Layer Rename](04-lua-layer-rename.md) | Dec 2025 | Complete | sl_* → lua_* (headers renamed, compat macros added) |
 
 ## Summary Statistics
 
@@ -18,6 +18,7 @@ This folder tracks all major refactoring efforts on the RTK Server codebase.
 | C files reorganized | 32 |
 | C functions renamed | ~530 |
 | Lua lines saved | ~8,860 |
+| C lines modularized | ~9,600 |
 | Documentation added | ~1,100 lines |
 
 ## Infrastructure Added
@@ -29,6 +30,34 @@ This folder tracks all major refactoring efforts on the RTK Server codebase.
 - `conf/crypto.conf` - Externalized crypto keys
 - `doc/PROTOCOL.md` - Packet protocol documentation
 - `doc/LUA_API.md` - Lua API reference
+
+## Current Build State
+
+The build uses fully modular split files:
+
+### Client Layer (8 files)
+- `client.c` - Core client functions (7,248 lines, reduced from ~15,700)
+- `client_crypto.c` - Encryption/decryption
+- `client_chat.c` - Chat, whispers, broadcasts
+- `client_visual.c` - Animations, look packets, movement display
+- `client_combat.c` - Health bars, damage, attacks
+- `client_inventory.c` - Items, equipment packets
+- `client_npc.c` - NPC dialogs, menus, shops
+- `client_player.c` - Player status, groups, exchange
+
+### Lua Layer (8 files)
+- `lua_core.c` - Core Lua bindings (10,050 lines, reduced from ~11,210)
+- `lua_types.c` - Type system
+- `lua_blocklist.c` - Spatial operations
+- `lua_player.c` - Player Lua bindings
+- `lua_mob.c` - Mob Lua bindings
+- `lua_npc.c` - NPC Lua bindings
+- `lua_item.c` - Item/recipe/parcel/floor item bindings
+- `lua_registry.c` - Registry bindings
+
+### Compatibility
+- Backward compatibility macros in headers map old names to new
+- Old function names (`clif_*`, `sl_*`) work via `#define` macros
 
 ## Naming Conventions (Current)
 

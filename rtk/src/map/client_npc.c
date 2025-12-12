@@ -23,8 +23,9 @@
 #include "pc.h"
 #include "itemdb.h"
 #include "magic.h"
-#include "sl.h"
+#include "lua_core.h"
 #include "socket.h"
+#include "crypt.h"  /* SWAP16, SWAP32 */
 #include "malloc.h"
 #include "class_db.h"
 #include "clan_db.h"

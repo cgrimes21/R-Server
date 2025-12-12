@@ -17,11 +17,12 @@
 #include "core.h"
 #include "map.h"
 #include "socket.h"
+#include "crypt.h"  /* SWAP16, SWAP32 */
 #include "malloc.h"
 #include "mmo.h"
 #include "pc.h"
 #include "command.h"
-#include "sl.h"
+#include "lua_core.h"
 #include "magic.h"
 #include "class_db.h"
 #include "../common/db_mysql.h"
