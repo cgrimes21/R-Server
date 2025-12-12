@@ -39,6 +39,8 @@
 #include "guide.h"
 #include "zlib.h"
 #include "strlib.h"
+#include "server_config.h"
+#include "game_state.h"
 
 #include <netdb.h>
 #ifndef _MAP_SERVER_
@@ -115,6 +117,10 @@ int map_n = 0;
 int oldHour;
 int oldMinute;
 int cronjobtimer;
+
+/* Global variable definitions (declared extern in headers) */
+unsigned char* objectFlags;
+int old_time, cur_time, cur_year, cur_day, cur_season;
 
 #define BL_LIST_MAX 32768
 
@@ -1583,6 +1589,7 @@ int config_read(const char* cfg_file) {
 			}
 			else if (strcmpi(r1, "ServerId") == 0) {
 				serverid = atoi(r2);
+				state_set_server_identity(serverid, NULL);
 			}
 			else if (strcmpi(r1, "npc") == 0) {
 				npc_src_add(r2);
@@ -1779,6 +1786,14 @@ int do_init(int argc, char** argv) {
 	char* LANG_FILE = "conf/lang.conf";
 	char* INTER_FILE = "conf/inter.conf";
 	char* CHAR_FILE = "conf/char.conf";
+	char* CRYPTO_FILE = "conf/crypto.conf";
+
+	/* Initialize centralized configuration system */
+	config_init_defaults();
+
+	/* Initialize centralized game state */
+	state_init_defaults();
+
 	srand(gettick());
 	set_logfile("log/map.log");
 	set_dmpfile("log/map_dump.log");
@@ -1800,6 +1815,9 @@ int do_init(int argc, char** argv) {
 	config_read(INTER_FILE);
 	config_read(CHAR_FILE);
 	lang_read(LANG_FILE);
+
+	/* Load crypto configuration (packet encryption keys) */
+	config_load_crypto(CRYPTO_FILE);
 	set_termfunc(do_term);
 	//CALLOC(userlist,struct userlist_data,1);
 	//gcFixPrematureFrees();
@@ -1818,6 +1836,9 @@ int do_init(int argc, char** argv) {
 		Sql_Free(sql_handle);
 		exit(EXIT_FAILURE);
 	}
+
+	/* Register database handle with game state */
+	state_set_db_handle(sql_handle);
 
 	if (SQL_ERROR == Sql_Query(sql_handle, "UPDATE `Character` SET `ChaOnline` = 0 WHERE `ChaOnline` = 1")) {
 		Sql_ShowDebug(sql_handle);
@@ -2113,7 +2134,7 @@ int nmail_read(USER* sd, int post) {
 		strcpy(WFIFOP(sd->fd,len+11),sql_get_str(2));
 		len+=strlen(sql_get_str(2))+1;
 		WFIFOW(sd->fd,1)=SWAP16(len+7);
-		crypt(WFIFOP(sd->fd,0));
+		rtk_crypt(WFIFOP(sd->fd,0));
 		WFIFOSET(sd->fd,len+10);
 		sql_free_row();
 		sql_request("UPDATE nmail SET new=0 WHERE touser='%s' AND mail_id=%d",sd->status.name,post);

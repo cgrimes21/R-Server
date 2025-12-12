@@ -1,4 +1,273 @@
+# RetroTK Server
+
+A complete MMO game server implementation for a classic Korean-style MMORPG, featuring a modular C core with Lua scripting for game logic.
+
+## Project Overview
+
+RetroTK Server is a full-featured game server that handles:
+- **Player Management** - Authentication, characters, inventory, equipment, spells, legends
+- **World Simulation** - Maps, NPCs, mobs, spawning, pathfinding
+- **Combat System** - Health, damage, threat, durations/buffs, PvP
+- **Economy** - Shops, banking, trading, crafting systems
+- **Social Features** - Chat, whispers, clans, groups, mail
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Clients                               │
+└─────────────────────────────────────────────────────────────┘
+                              │
+              ┌───────────────┼───────────────┐
+              ▼               ▼               ▼
+        ┌──────────┐   ┌──────────┐   ┌──────────┐
+        │  Login   │   │   Char   │   │   Map    │
+        │  Server  │◄─►│  Server  │◄─►│  Server  │
+        └──────────┘   └──────────┘   └──────────┘
+              │               │               │
+              └───────────────┼───────────────┘
+                              ▼
+                      ┌──────────────┐
+                      │    MySQL     │
+                      │   Database   │
+                      └──────────────┘
+```
+
+### Technology Stack
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| Core Server | C | Performance-critical networking, packet handling |
+| Game Logic | Lua 5.1 | NPCs, quests, spells, crafting, events |
+| Database | MySQL | Persistence for characters, items, world state |
+| Client | Custom | Windows client in `/client/RetroTK` |
+
+### Codebase Statistics
+
+| Metric | Count |
+|--------|-------|
+| C Source Lines | ~64,000 |
+| Lua Script Lines | ~73,000 |
+| C Source Files | 42 |
+| Lua Script Files | 907 |
+
+---
+
+## Refactoring Project
+
+This codebase underwent a comprehensive modernization effort to improve maintainability, reduce duplication, and establish better architectural patterns.
+
+### Goals
+
+1. **Modularize monolithic files** - Break 15K+ line files into focused, single-responsibility modules
+2. **Eliminate code duplication** - Consolidate repetitive Lua patterns into data-driven systems
+3. **Improve architecture** - Centralize configuration, state management, and error handling
+4. **Document the codebase** - Create protocol and API documentation for future development
+
+### Results Summary
+
+| Phase | Description | Result |
+|-------|-------------|--------|
+| **Phase 1** | C File Modularization | clif.c → 8 modules, sl.c → 7 modules |
+| **Phase 2** | Lua Consolidation | **70% reduction** (~8,860 lines saved) |
+| **Phase 3** | Architecture | Centralized config & state management |
+| **Phase 4** | Code Quality | Error handling, memory docs, API docs |
+
+### Phase 1: C Modularization
+
+Split massive C files into focused, maintainable modules:
+
+**clif.c (15,731 lines → 8 modules)**
+| Module | Lines | Purpose |
+|--------|-------|---------|
+| `clif_crypto.c` | 80 | Packet encryption/decryption |
+| `clif_chat.c` | 900 | Chat, whispers, broadcasts |
+| `clif_visual.c` | 500 | Animations, movement display |
+| `clif_combat.c` | 900 | Health bars, damage, attacks |
+| `clif_inventory.c` | 1,000 | Items, equipment, durability |
+| `clif_npc.c` | 1,835 | NPC dialogs, menus, shops |
+| `clif_player.c` | 750 | Status, groups, exchange |
+| `clif.c` | ~9,000 | Core packet routing |
+
+**sl.c (11,344 lines → 7 modules)**
+| Module | Lines | Purpose |
+|--------|-------|---------|
+| `sl_types.c` | 170 | Lua type metaclass system |
+| `sl_blocklist.c` | 850 | Spatial entity bindings |
+| `sl_player.c` | 5,250 | Player Lua API (150+ methods) |
+| `sl_registry.c` | 200 | Registry types |
+| `sl_item.c` | 430 | Item type bindings |
+| `sl_npc.c` | 265 | NPC type bindings |
+| `sl_mob.c` | 970 | Mob type bindings |
+
+### Phase 2: Lua Consolidation
+
+Replaced repetitive code patterns with data-driven infrastructure:
+
+| System | Original | Refactored | Reduction |
+|--------|----------|------------|-----------|
+| Crafting (5 files) | 5,029 lines | 640 lines | **87%** |
+| Trainer NPCs (4 files) | 4,429 lines | 950 lines | **79%** |
+| Player functions | 2,011 lines | 519 lines | **74%** |
+| NPC appearance | 1,120 lines | 300 lines | **73%** |
+| **Total** | **12,589 lines** | **2,409 lines** | **81%** |
+
+Infrastructure files created: `crafting_base.lua`, `trainer_base.lua`, `player_base.lua`, `npc_base.lua`
+
+### Phase 3: Architecture Improvements
+
+**Configuration Externalization**
+- `server_config.h/c` - Centralized configuration management
+- `crypto.conf` - Externalized packet encryption keys (previously hardcoded)
+
+**State Management**
+- `game_state.h/c` - Centralized runtime state (network, time, spawn counters, stats)
+
+### Phase 4: Code Quality
+
+**Error Handling**
+- `rtk_error.h` - Standardized error codes and helper macros
+- 7 error categories: General, Memory, Network, Database, File, Game, Player
+
+**Documentation**
+- `doc/PROTOCOL.md` - Packet protocol documentation (structure, encryption, opcodes)
+- `doc/LUA_API.md` - Complete Lua scripting API reference (600+ lines)
+
+**Memory Management**
+- `rtk_memory.h` - Memory conventions documentation and safety macros
+
+---
+
+## Project Structure
+
+```
+RTK-Server/
+├── rtk/                    # Server source code
+│   ├── src/
+│   │   ├── common/         # Shared utilities
+│   │   │   ├── db_mysql.c  # Database abstraction
+│   │   │   ├── socket.c    # Network I/O
+│   │   │   ├── crypt.c     # Encryption
+│   │   │   ├── server_config.c  # Configuration management
+│   │   │   ├── game_state.c     # State management
+│   │   │   └── rtk_error.h      # Error handling
+│   │   ├── login/          # Login server
+│   │   ├── char/           # Character server
+│   │   └── map/            # Map server (main game logic)
+│   │       ├── clif*.c     # Client interface modules
+│   │       ├── sl*.c       # Lua scripting modules
+│   │       ├── pc.c        # Player character
+│   │       ├── mob.c       # Mob AI
+│   │       └── map.c       # World management
+│   ├── conf/               # Configuration files
+│   └── doc/                # Documentation
+│       ├── PROTOCOL.md     # Packet protocol
+│       └── LUA_API.md      # Lua API reference
+├── rtklua/                 # Lua game scripts
+│   └── Accepted/
+│       ├── Crafting/       # Crafting systems
+│       ├── NPCs/           # NPC scripts
+│       ├── Mobs/           # Mob definitions
+│       ├── Items/          # Item scripts
+│       └── Quests/         # Quest scripts
+├── database/               # Database migrations
+├── client/                 # Game client
+├── claude.md               # Detailed refactoring documentation
+└── GITUPDATES.md           # Changelog
+```
+
+---
+
+## Building
+
+### Requirements
+
+- Linux (Ubuntu 16.04+ or WSL)
+- GCC
+- MySQL 5.7+ / MariaDB
+- Lua 5.1
+- zlib
+
+### Install Dependencies
+
+```bash
+# Ubuntu/Debian
+sudo apt install build-essential make mysql-server libmysqlclient-dev lua5.1 liblua5.1-dev zlib1g-dev
+
+# Or on newer systems
+sudo apt install build-essential make mariadb-server libmariadb-dev lua5.1 liblua5.1-dev zlib1g-dev
+```
+
+### Build
+
+```bash
+cd rtk
+make all        # Build all servers
+make map        # Build map-server only
+make login      # Build login-server only
+make char       # Build char-server only
+make clean      # Clean build artifacts
+```
+
+### Run
+
+```bash
+./login-server &
+./char-server &   # Wait for login connection
+./map-server &    # Wait for char connection
+```
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [claude.md](claude.md) | Detailed refactoring progress and technical notes |
+| [GITUPDATES.md](GITUPDATES.md) | Complete changelog with code examples |
+| [doc/PROTOCOL.md](rtk/doc/PROTOCOL.md) | Packet protocol specification |
+| [doc/LUA_API.md](rtk/doc/LUA_API.md) | Lua scripting API reference |
+
+---
+
+## Development
+
+### Adding New Features
+
+1. **C Code** - Add to appropriate module in `rtk/src/map/`
+2. **Lua Scripts** - Add to `rtklua/Accepted/` with appropriate category
+3. **Database Changes** - Add migration script to `database/`
+
+### Code Conventions
+
+- **Error Handling** - Use `rtk_error.h` macros for new C code
+- **Memory** - Use `CALLOC`/`FREE` macros, see `rtk_memory.h`
+- **Lua Types** - Follow `sl_types.c` patterns for new type bindings
+- **Configuration** - Add new settings to `server_config.h`
+
+### Testing
+
+```bash
+# Syntax check C files
+cd rtk/src/map
+gcc -fsyntax-only -I../common *.c
+
+# Build and verify
+cd rtk
+make map
+ls -la map-server  # Should show ~2MB binary
+```
+
+---
+
+## Local Server Setup
+
+For detailed instructions on setting up a local development server with VirtualBox, see the [Local Setup Guide](#local-rtk-server-setup) below.
+
+---
+
 # Local RTK Server Setup
+
 This document describes how to set up a local RTK server on a PC running `Windows 10` and using `VirtualBox 6.1.8`. Any deviations from that setup may result in procedural discrepancies.
 
 ***
@@ -46,7 +315,7 @@ This document describes how to set up a local RTK server on a PC running `Window
 17. Choose `<Yes>` for `Install the GRUB boot loader`
 18. `Finish the installation`:
     - The installation media should have been removed automatically
-    - In the `VirtualBox` menu bar, if `Devices` &rarr; `Optical drives` &rarr; `Remove disk from virtual drive` is *not* grayed out, select it to manually remove the media
+    - In the `VirtualBox` menu bar, if `Devices` → `Optical drives` → `Remove disk from virtual drive` is *not* grayed out, select it to manually remove the media
     - Choose `<Continue>`
     - After installation completes, the VM will automatically boot up and eventually prompt you for `rtk login:`
 
@@ -60,7 +329,7 @@ This document describes how to set up a local RTK server on a PC running `Window
 3. Enter `sudo apt upgrade` and then `y` to confirm
 4. Enter `sudo apt-get install build-essential make mysql-server libmysqlclient20 libmysqlclient-dev lua5.1 liblua5.1 liblua5.1-dev` and then `y` to confirm
    - Enter and confirm any password of your choosing for the `MySQL "root" user` when prompted
-5. In the `VirtualBox` menu bar, select `Machine` &rarr; `ACPI Shutdown` to turn off your VM
+5. In the `VirtualBox` menu bar, select `Machine` → `ACPI Shutdown` to turn off your VM
 
 ***
 
@@ -74,7 +343,7 @@ This document describes how to set up a local RTK server on a PC running `Window
      - e.g. `sudo mount -t vboxsf rtk ~/shared`
      - e.g. `rtk    /home/gm/shared    vboxsf    defaults    0    0` (separated by tabs)
    - Ignore the `Bonus` section
-2. In the `VirtualBox` menu bar, select `Machine` &rarr; `ACPI Shutdown` to turn off your VM
+2. In the `VirtualBox` menu bar, select `Machine` → `ACPI Shutdown` to turn off your VM
 
 ***
 
@@ -196,7 +465,7 @@ If you want to use database management software to connect to the MySQL database
    - Comment out the line that starts with `bind-address` (i.e. add a `#` at the start of that line)
    - `Ctrl` + `x`, then `y`, then `Enter` to save your changes
 2. Log into MySQL:
-   - `/usr/bin/mysql -u root -p` 
+   - `/usr/bin/mysql -u root -p`
 3. Create a root user that can login from your Host PC:
    - `CREATE USER 'root'@'192.168.56.1' IDENTIFIED BY '[any password of your choosing]'`;
    - `GRANT ALL PRIVILEGES ON *.* TO 'root'@'192.168.56.1';`
@@ -218,3 +487,13 @@ If you want to use database management software to connect to the MySQL database
 
 - Use `Shift` + `PgUp` and `PgDown` to scroll up and down in the Ubuntu Server terminal
 - [MySQL Cheat Sheet](https://gist.github.com/bradtraversy/c831baaad44343cc945e76c2e30927b3)
+
+---
+
+## License
+
+Private project - not for public distribution.
+
+---
+
+*Last Updated: 2025-12-12*

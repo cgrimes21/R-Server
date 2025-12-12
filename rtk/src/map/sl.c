@@ -27,35 +27,14 @@
 #include "npc.h"
 #include "command.h"
 
+/* Type system definitions moved to sl_types.h/sl_types.c */
 #define sl_redtext(text) "\033[31;1m" text "\033[0m"
 #define sl_err(text) printf(sl_redtext("Lua error:") " %s\n", text)
 #define sl_err_print(state) sl_err(lua_tostring(state, -1))
-// accessors should return 1 if the attribute was handled; otherwise an error will be raised
-typedef int (*typel_getattrfunc)(lua_State*, void* /* self */, char* /* attrname */);
-typedef int (*typel_setattrfunc)(lua_State*, void* /* self */, char* /*attrname */);
-typedef int (*typel_initfunc)(lua_State*, void* /* self */, int /* dataref */, void* /* param */);
-typedef struct typel_class_ {
-	// an luaL_ref reference to the prototype table for this class. the prototype table holds
-	// the functions for this class.
-	int protoref;
-	char* name;
-	typel_getattrfunc getattr;
-	typel_setattrfunc setattr;
-	typel_initfunc init;
-	// remember when implementing the ctor that the first argument will always be the class
-	// however, luaL_argerror uses normal indices; as in 1 still refers to the first real argument
-	lua_CFunction ctor;
-} typel_class;
-typedef struct typel_inst_ {
-	typel_class* type;
-	int dataref;
-	void* self;
-} typel_inst;
+
 int errors;
-int typel_mtindex(lua_State*);
-int typel_mtnewindex(lua_State*);
-int typel_mtgc(lua_State*);
-int typel_mtref;
+lua_State* sl_gstate;
+
 // TODO: actually use this!
 #define sl_ensureasync(state) \
 	if(state == sl_gstate) { luaL_error(state, "this function must be called from a coroutine; " \
@@ -64,17 +43,7 @@ int typel_mtref;
 // TODO: do we even need this anymore?
 #define typel_err_invalidattr(state, type, attrname) \
 	luaL_error(state, "'%s' object has no attribute '%s'", type->name, attrname)
-void typel_staticinit();
 void typel_staticdestroy(); // TODO: this should unref typel_mtref?
-typedef int (*typel_func)(lua_State*, void* /* self */);
-#define typel_topointer(state, index) (((typel_inst *)lua_touserdata(state, index))->self)
-#define typel_check(state, index, type) (((typel_inst *)lua_touserdata(state, index))->type == type)
-int typel_boundfunc(lua_State*);
-void typel_pushinst(lua_State*, typel_class*, void*, void*);
-typel_class typel_new(char*, lua_CFunction);
-void typel_extendproto(typel_class*, char*, typel_func);
-#define sl_memberarg(x) (x + 1)
-#define sl_memberself 1
 
 int bll_getattr(lua_State*, struct block_list*, char* attrname);
 int bll_setattr(lua_State*, struct block_list*, char* attrname);
@@ -3750,111 +3719,8 @@ int questregl_setattr(lua_State* state, USER* sd, char* attrname) {
 	pc_setquestreg(sd, attrname, lua_tonumber(state, -1));
 	return 1;
 }
-void typel_staticinit() {
-	lua_newtable(sl_gstate); // the global metatable
-	lua_pushcfunction(sl_gstate, typel_mtindex);
-	lua_setfield(sl_gstate, -2, "__index");
-	lua_pushcfunction(sl_gstate, typel_mtnewindex);
-	lua_setfield(sl_gstate, -2, "__newindex");
-	lua_pushcfunction(sl_gstate, typel_mtgc);
-	lua_setfield(sl_gstate, -2, "__gc");
-	typel_mtref = luaL_ref(sl_gstate, LUA_REGISTRYINDEX);
-	printf("old pause: %d\n", lua_gc(sl_gstate, LUA_GCSETPAUSE, 100));
-	printf("old mult: %d\n", lua_gc(sl_gstate, LUA_GCSETSTEPMUL, 1000));
-}
-typel_class typel_new(char* name, lua_CFunction ctor) {
-	typel_class type;
-	memset(&type, 0, sizeof(typel_class));
-	// TODO: expose the type object, not the prototype, to lua
-	lua_newtable(sl_gstate); // the prototype table
-	if (ctor) {
-		lua_newtable(sl_gstate);
-		lua_pushcfunction(sl_gstate, ctor);
-		lua_setfield(sl_gstate, -2, "__call");
-		lua_setmetatable(sl_gstate, -2);
-		type.ctor = ctor;
-	}
-	type.protoref = luaL_ref(sl_gstate, LUA_REGISTRYINDEX);
-	sl_pushref(sl_gstate, type.protoref); // expose the prototype table to lua
-	lua_setglobal(sl_gstate, name);
-	type.name = name;
-	return type;
-}
-int typel_mtgc(lua_State* state) {
-	typel_inst* inst = lua_touserdata(state, 1);
-	struct block_list* bl = (struct block_list*)inst->self;
-	luaL_unref(state, LUA_REGISTRYINDEX, inst->dataref);
 
-	//FREE(inst->type);
-	//FREE(inst);
-	return 0;
-}
-void typel_pushinst(lua_State* state, typel_class* type, void* self, void* param) {
-	typel_inst* inst = lua_newuserdata(state, sizeof(typel_inst));
-	inst->self = self;
-	inst->type = type;
-	sl_pushref(state, typel_mtref); // set the metatable
-	lua_setmetatable(state, -2);
-	lua_newtable(state); // create a new data table and store a ref
-	inst->dataref = luaL_ref(state, LUA_REGISTRYINDEX);
-	if (type->init && inst->self) { type->init(state, inst->self, inst->dataref, param); }
-	//else { luaL_error(state,"dataref no longer exists"); }
-}
-void typel_extendproto(typel_class* type, char* name, typel_func func) {
-	sl_pushref(sl_gstate, type->protoref);
-	lua_pushlightuserdata(sl_gstate, func);
-	lua_pushcclosure(sl_gstate, typel_boundfunc, 1);
-	lua_setfield(sl_gstate, -2, name);
-	lua_pop(sl_gstate, 1); // pop the prototype table
-}
-int typel_boundfunc(lua_State* state) {
-	typel_func wrapped = lua_touserdata(state, lua_upvalueindex(1));
-	typel_inst* inst = lua_touserdata(state, 1); // the first parameter is the userdata object
-
-	if (inst && inst->self) {
-		return wrapped(state, inst->self);
-	}
-}
-int typel_mtindex(lua_State* state) {
-	typel_inst* inst = lua_touserdata(state, 1);
-	typel_class* type = inst->type;
-	char* attrname = lua_tostring(state, 2);
-	int result = 0;
-	if (!inst->self) { lua_pushnil(state); return 1; }
-	if (type->getattr)
-		result = type->getattr(state, inst->self, attrname);
-	if (!result) {
-		// the attribute was not handled by the getattr method
-		// next, try the prototype table
-		sl_pushref(state, type->protoref);
-		lua_getfield(state, -1, attrname);
-		if (lua_isnil(state, -1)) {
-			lua_pop(state, 2); // clean up the stack
-			// then try the data table associated with the instance
-			sl_pushref(state, inst->dataref);
-			lua_getfield(state, -1, attrname);
-			if (lua_isnil(state, -1)) {
-				// there is no such attribute; push nil
-				lua_pop(state, 1);
-				lua_pushnil(state);
-			}
-		}
-		lua_replace(state, -2);
-	}
-	return 1;
-}
-int typel_mtnewindex(lua_State* state) {
-	typel_inst* inst = lua_touserdata(state, 1);
-	typel_class* type = inst->type;
-	char* attrname = lua_tostring(state, 2);
-	if (!inst->self) { return 0; }
-	int result = 0;
-	if (type->setattr)
-		result = type->setattr(state, inst->self, attrname);
-	if (!result) { /* TODO: error */ }
-
-	return 0;
-}
+/* typel_* functions moved to sl_types.c */
 
 int bll_deliddb(lua_State* state, struct block_list* bl) {
 	map_deliddb(bl);

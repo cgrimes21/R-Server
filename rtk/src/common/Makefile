@@ -3,7 +3,7 @@
 	@echo -e " Compile... $<"
 	@$(CC) $(CFLAGS) -c -o $@ $<
 
-all: core.o socket.o timer.o db.o crypt.o malloc.o db_mysql.o md5calc.o ers.o showmsg.o strlib.o rndm.o
+all: core.o socket.o timer.o db.o crypt.o malloc.o db_mysql.o md5calc.o ers.o showmsg.o strlib.o rndm.o server_config.o game_state.o
 malloc.o: malloc.c malloc.h
 core.o: core.c core.h
 socket.o: socket.c socket.h malloc.h
@@ -16,5 +16,7 @@ ers.o: ers.c ers.h
 showmsg.o: showmsg.c showmsg.h
 strlib.o: strlib.c strlib.h
 rndm.o: rndm.c rndm.h
+server_config.o: server_config.c server_config.h showmsg.h
+game_state.o: game_state.c game_state.h showmsg.h
 clean:
 	@rm -f *.o

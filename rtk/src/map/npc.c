@@ -26,6 +26,7 @@ struct npc_src_list* warp_src_last = NULL;
 
 //unsigned int npcchar_id = CNPC_START_NUM;
 unsigned int npctemp_id = NPCT_START_NUM;
+unsigned int npc_id = NPC_START_NUM;
 
 // Function Prototype
 //----------------------------

@@ -33,6 +33,7 @@ time_t last_tick;
 time_t stall_time = 60;
 
 struct socket_data* session[FD_SETSIZE];
+int server_shutdown;
 
 int null_parse(int fd);
 int null_accept(int fd);

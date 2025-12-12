@@ -29,6 +29,9 @@ pthread_t thread_id_packet;
 pthread_t thread_sendrecv;
 pthread_t thread_dotimer;
 
+/* Global variable definitions (declared extern in headers) */
+unsigned long Last_Eof;
+
 // --------------------------
 // Main Routine
 //----------------------------

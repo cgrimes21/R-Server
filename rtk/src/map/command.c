@@ -234,7 +234,7 @@ struct {
 		{NULL,NULL,NULL}
 };
 
-struct userlist_data userlist;
+extern struct userlist_data userlist;
 
 int command_report(USER* sd, char* line, lua_State* state) {
 	USER* tsd = NULL;

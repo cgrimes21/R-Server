@@ -31,6 +31,13 @@ char sql_pw[32] = "";
 char sql_db[32] = "";
 char sql_ip[32] = "";
 int sql_port;
+
+/* Global variable definitions (declared extern in login.h) */
+char meta_file[META_MAX][256];
+int metamax;
+int nex_version;
+int nex_deep;
+
 //static char check_table_thing[]={'\\','/',';','=',':','(',')',NULL}
 const char mask1[] = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ";
 const char mask2[] = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ1234567890";

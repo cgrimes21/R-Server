@@ -11,7 +11,8 @@
 #include "db_mysql.h"
 #include "strlib.h"
 
-DBMap* class_db;
+extern DBMap* class_db;
+struct class_data* cdata[20];
 
 struct class_data* classdb_search(int id) {
 	static struct class_data* db = NULL;
