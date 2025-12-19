@@ -1,6 +1,6 @@
 USE RTK;
 
-SET @script = '2020-10-02-11-28_InsertCotwGiasomoBird.sql';
+SET @script = '21_InsertMagisBanePoet.sql';
 
 DELIMITER $$
 
@@ -12,10 +12,12 @@ CREATE PROCEDURE sp(
 
 BEGIN
 	IF NOT EXISTS (SELECT * FROM MigrationHistory WHERE Script = scriptName) THEN
-		CREATE TEMPORARY TABLE tmptable_1 SELECT * FROM Mobs WHERE MobId = 562;
-		UPDATE tmptable_1 SET MobId = 807, MobIdentifier = 'cotw_giasomo_bird', MobDescription = 'Giasomo bird', MobLook = 58, MobLookColor = 0;
-		INSERT INTO Mobs SELECT * FROM tmptable_1;
+		CREATE TEMPORARY TABLE tmptable_1 SELECT * FROM Spells WHERE SplId = 3167;
+		UPDATE tmptable_1 SET SplId = 4729, SplIdentifier = 'magis_bane_poet', SplPthId = 4;
+		INSERT INTO Spells SELECT * FROM tmptable_1;
 		DROP TEMPORARY TABLE IF EXISTS tmptable_1;
+		
+		UPDATE Spells SET SplDescription = 'Magi\'s Bane' WHERE SplDescription = 'Magi\'s bane';
 
 		INSERT INTO `MigrationHistory` (Script,Timestamp) VALUES (scriptName,NOW());
 	ELSE

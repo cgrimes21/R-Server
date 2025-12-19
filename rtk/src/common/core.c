@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <sys/time.h>
 #include <ctype.h>
 #include <time.h>
@@ -29,6 +30,25 @@ pthread_t thread_id_packet;
 pthread_t thread_sendrecv;
 pthread_t thread_dotimer;
 
+/* Pthread wrapper functions - convert void* signature to actual function calls */
+static void* thread_timer_wrapper(void* arg) {
+	unsigned int tick = (unsigned int)(uintptr_t)arg;
+	timer_do(tick);
+	return NULL;
+}
+
+static void* thread_sendrecv_wrapper(void* arg) {
+	int next = (int)(intptr_t)arg;
+	do_sendrecv(next);
+	return NULL;
+}
+
+static void* thread_parsepacket_wrapper(void* arg) {
+	(void)arg;  // unused
+	do_parsepacket();
+	return NULL;
+}
+
 /* Global variable definitions (declared extern in headers) */
 unsigned long Last_Eof;
 
@@ -38,6 +58,10 @@ unsigned long Last_Eof;
 int main(int argc, char** argv)
 {
 	Last_Eof = 0;
+
+	// Disable stdout/stderr buffering for proper logging when redirected to file
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
 
 	gettimeofday(&start, NULL);
 
@@ -65,17 +89,10 @@ int main(int argc, char** argv)
 	while (run) {
 		tick = gettick_nocache();
 
-		//Timer thread
-		next = pthread_create(&thread_dotimer, NULL, timer_do, tick);
-		pthread_join(thread_dotimer, NULL);
-
-		//send & receive thread
-		pthread_create(&thread_sendrecv, NULL, do_sendrecv, next);
-		pthread_join(thread_sendrecv, NULL);
-
-		//packet thread
-		pthread_create(&thread_id_packet, NULL, do_parsepacket, NULL);
-		pthread_join(thread_id_packet, NULL);
+		// Run directly without threads (threading overhead adds no value when immediately joining)
+		next = timer_do(tick);
+		do_sendrecv(next);
+		do_parsepacket();
 	}
 
 	return 0;
@@ -204,6 +221,7 @@ void set_termfunc(void (*termfunc)(void))
 static void sig_proc(int sn)
 {
 	int i;
+	printf("[DEBUG] sig_proc: received signal %d\n", sn); fflush(stdout);
 	switch (sn) {
 	case SIGINT:
 	case SIGTERM:

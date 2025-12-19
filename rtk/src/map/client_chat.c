@@ -32,7 +32,6 @@
 int client_popup(USER* sd, const char* buf) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -51,7 +50,6 @@ int client_popup(USER* sd, const char* buf) {
 int client_paper_popup(USER* sd, const char* buf, int width, int height) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -72,7 +70,6 @@ int client_paper_popup(USER* sd, const char* buf, int width, int height) {
 int client_paper_popup_write(USER* sd, const char* buf, int width, int height, int invslot) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -93,7 +90,6 @@ int client_paper_popup_write(USER* sd, const char* buf, int width, int height, i
 int client_paper_popup_write_save(USER* sd) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -125,7 +121,6 @@ int client_send_msg(USER* sd, int type, char* buf) {
 	WFIFOHEAD(sd->fd, 8 + len);
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -151,7 +146,6 @@ int client_send_minitext(USER* sd, char* msg) {
 int client_send_blue_message(USER* sd, char* msg) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -180,7 +174,6 @@ int client_broadcast_sub(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -211,7 +204,6 @@ int client_gm_broadcast_sub(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -241,7 +233,6 @@ int client_broadcast_to_gm_sub(struct block_list* bl, va_list ap) {
 
 		if (!session[sd->fd])
 		{
-			session[sd->fd]->eof = 8;
 			return 0;
 		}
 
@@ -557,7 +548,6 @@ int client_send_script_say(USER* sd, char* msg, int msglen, int type) {
 
 		if (!session[sd->fd])
 		{
-			session[sd->fd]->eof = 8;
 			return 0;
 		}
 
@@ -600,7 +590,6 @@ int client_send_script_say(USER* sd, char* msg, int msglen, int type) {
 	else {
 		if (!session[sd->fd])
 		{
-			session[sd->fd]->eof = 8;
 			return 0;
 		}
 
@@ -904,7 +893,6 @@ int client_speak(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1046,7 +1034,6 @@ int client_gui_text_sd(char* msg, USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1078,7 +1065,6 @@ int client_gui_text(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 

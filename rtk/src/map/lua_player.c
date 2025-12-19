@@ -3553,7 +3553,6 @@ int lua_player_testpacket(lua_State* state, USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -4833,7 +4832,7 @@ int lua_player_setAccountBan(lua_State* state, USER* sd) {
 		char name[16];
 		memcpy(name, sd->status.name, 16);
 
-		if (banned == 1) session[sd->fd]->eof = 1;
+		if (banned == 1 && session[sd->fd]) session[sd->fd]->eof = 1;
 
 		if (SQL_ERROR == Sql_Query(sql_handle, "UPDATE `Character` SET ChaBanned = '%i' WHERE `ChaName` = '%s'", banned, name)) {
 			SqlStmt_ShowDebug(sql_handle);
@@ -4876,7 +4875,7 @@ int lua_player_setAccountBan(lua_State* state, USER* sd) {
 			for (int i = 0; i < sizeof(ChaIds); i++) {	// disconnect all now banned chars
 				if (ChaIds[i] > 0) {
 					USER* tsd = map_id2sd(ChaIds[i]);
-					if (tsd != NULL) session[tsd->fd]->eof = 1;
+					if (tsd != NULL && session[tsd->fd]) session[tsd->fd]->eof = 1;
 				}
 			}
 		}

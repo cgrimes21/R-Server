@@ -32,6 +32,11 @@ int check_connect_char(int ip, int port) {
 	if (char_fd <= 0 || session[char_fd] == NULL) {
 		printf("Attempt to connect to char-server...\n");
 		char_fd = make_connection(ip, port);
+		if (char_fd < 0) {
+			printf("Failed to create connection to char-server.\n");
+			char_fd = 0;  // Reset to trigger retry next time
+			return 0;
+		}
 		session[char_fd]->func_parse = intif_parse;
 		session[char_fd]->func_shutdown = intif_shutdown;
 		realloc_rfifo(char_fd, FIFOSIZE_SERVER, FIFOSIZE_SERVER);
@@ -157,13 +162,17 @@ int intif_save(USER* sd) {
 int intif_mmo_tosd(int fd, struct mmo_charstatus* p) {
 	USER* sd;
 	int n;
+	printf("[DEBUG] intif_mmo_tosd: fd=%d, p=%p\n", fd, (void*)p); fflush(stdout);
 	if (fd == map_fd) {
+		printf("[DEBUG] intif_mmo_tosd: fd is map_fd, returning\n"); fflush(stdout);
 		return 0;
 	}
 	if (!p) {
-		session[fd]->eof = 7;
+		printf("[DEBUG] intif_mmo_tosd: p is NULL, setting eof=7\n"); fflush(stdout);
+		if (session[fd]) session[fd]->eof = 7;
 		return 0;
 	}
+	printf("[DEBUG] intif_mmo_tosd: char=%s id=%d\n", p->name, p->id); fflush(stdout);
 	//if(session[fd]->session_data) { //data already exists
 	//	session[fd]->eof=8;
 	//	return 0;
@@ -171,6 +180,8 @@ int intif_mmo_tosd(int fd, struct mmo_charstatus* p) {
 
 	CALLOC(sd, USER, 1);
 	memcpy(&sd->status, p, sizeof(struct mmo_charstatus));
+	printf("[DEBUG] intif_mmo_tosd: after memcpy level=%d hp=%d mp=%d might=%d will=%d grace=%d\n",
+		sd->status.level, sd->status.hp, sd->status.mp, sd->status.basemight, sd->status.basewill, sd->status.basegrace); fflush(stdout);
 
 	sd->fd = fd;
 
@@ -212,35 +223,47 @@ int intif_mmo_tosd(int fd, struct mmo_charstatus* p) {
 	//if (sd->status.last_pos.m == NULL) { sd->status.last_pos.m = 1000; sd->status.last_pos.x = 8; sd->status.last_pos.y = 7; } // commented on 05-28-18
 
 	if (sd->status.gm_level) sd->optFlags = optFlag_walkthrough; //.
+	printf("[DEBUG] spawn: map=%d x=%d y=%d loaded=%d\n", sd->status.last_pos.m, sd->status.last_pos.x, sd->status.last_pos.y, map_isloaded(sd->status.last_pos.m)); fflush(stdout);
 	if (!map_isloaded(sd->status.last_pos.m)) {
+		printf("[DEBUG] spawn: WARNING - map %d not loaded!\n", sd->status.last_pos.m); fflush(stdout);
 		//sd->status.last_pos.m=0; sd->status.last_pos.x=8; sd->status.last_pos.y=7;
 	}
 
+	printf("[DEBUG] spawn: calling pc_setpos\n"); fflush(stdout);
 	pc_setpos(sd, sd->status.last_pos.m, sd->status.last_pos.x, sd->status.last_pos.y);
+	printf("[DEBUG] spawn: calling pc_loadmagic\n"); fflush(stdout);
 	pc_loadmagic(sd);
 	pc_starttimer(sd);
 	pc_requestmp(sd);
 
+	printf("[DEBUG] spawn: sending client packets...\n"); fflush(stdout);
 	client_sendack(sd);
 	client_sendtime(sd);
 	client_sendid(sd);
+	printf("[DEBUG] spawn: calling client_sendmapinfo\n"); fflush(stdout);
 	client_sendmapinfo(sd);
+	printf("[DEBUG] spawn: calling client_send_status\n"); fflush(stdout);
 	client_send_status(sd, SFLAG_FULLSTATS | SFLAG_HPMP | SFLAG_XPMONEY);
 	client_my_status(sd);
+	printf("[DEBUG] spawn: calling client_spawn\n"); fflush(stdout);
 	client_spawn(sd);
+	printf("[DEBUG] spawn: calling client_refresh\n"); fflush(stdout);
 	client_refresh(sd);
 	client_send_xy(sd);
 	client_get_char_area(sd);
 
+	printf("[DEBUG] spawn: mob_look_start\n"); fflush(stdout);
 	client_mob_look_start(sd);
 	map_foreachinarea(client_object_look_sub, sd->bl.m, sd->bl.x, sd->bl.y, SAMEAREA, BL_ALL, LOOK_GET, sd);
 	client_mob_look_close(sd);
 
+	printf("[DEBUG] spawn: loading items/equip\n"); fflush(stdout);
 	pc_loaditem(sd);
 	pc_loadequip(sd);
 
 	pc_magic_startup(sd);
 	map_addiddb(&sd->bl);
+	printf("[DEBUG] spawn: COMPLETE for %s on map %d\n", sd->status.name, sd->bl.m); fflush(stdout);
 
 	///test stuff
 	/*
@@ -252,6 +275,7 @@ int intif_mmo_tosd(int fd, struct mmo_charstatus* p) {
 	WFIFOB(sd->fd,5)=0x6D;
 	WFIFOSET(sd->fd,6);
 	*/
+	printf("[DEBUG] post-spawn: calling mmo_setonline\n"); fflush(stdout);
 	mmo_setonline(sd->status.id, 1);
 
 	if (sd->status.gm_level) {
@@ -259,11 +283,17 @@ int intif_mmo_tosd(int fd, struct mmo_charstatus* p) {
 		//printf("GM(%s) set to stealth.\n",sd->status.name);
 	}
 
+	printf("[DEBUG] post-spawn: calling pc_calcstat\n"); fflush(stdout);
 	pc_calcstat(sd);
+	printf("[DEBUG] post-spawn: calling pc_checklevel\n"); fflush(stdout);
 	pc_checklevel(sd);
+	printf("[DEBUG] post-spawn: calling client_my_status\n"); fflush(stdout);
 	client_my_status(sd);
+	printf("[DEBUG] post-spawn: calling client_update_state foreachinarea\n"); fflush(stdout);
 	map_foreachinarea(client_update_state, sd->bl.m, sd->bl.x, sd->bl.y, AREA, BL_PC, sd);
+	printf("[DEBUG] post-spawn: calling client_retrieve_profile\n"); fflush(stdout);
 	client_retrieve_profile(sd);
+	printf("[DEBUG] post-spawn: returning from spawn\n"); fflush(stdout);
 	return 0;
 }
 int authdb_init() {
@@ -408,15 +438,27 @@ int intif_parse_authadd(int fd) {
 int intif_parse_charload(int fd) {
 	unsigned int ulen, clen, retval, x;
 	char* cbuf = NULL;
+	unsigned long destLen;
 
 	struct mmo_charstatus* a = NULL;
 	if (!session[RFIFOW(fd, 6)])
 		return 0;
 
 	ulen = sizeof(struct mmo_charstatus);
-	clen = ulen;
+	destLen = ulen;
+	printf("[DEBUG] charload: client_fd=%d, packet_len=%d, expected_struct_size=%u\n", RFIFOW(fd, 6), RFIFOL(fd, 2), ulen); fflush(stdout);
+	printf("[DEBUG] charload: compressed_size=%d\n", RFIFOL(fd, 2) - 8); fflush(stdout);
 	CALLOC(cbuf, char, ulen);
-	retval = uncompress(cbuf, &clen, RFIFOP(fd, 8), RFIFOL(fd, 2) - 8);
+	retval = uncompress((Bytef*)cbuf, &destLen, RFIFOP(fd, 8), RFIFOL(fd, 2) - 8);
+	printf("[DEBUG] charload: uncompress retval=%d destLen=%lu\n", retval, destLen); fflush(stdout);
+	if (retval != Z_OK) {
+		printf("[DEBUG] charload: DECOMPRESSION FAILED! retval=%d (Z_OK=0, Z_MEM_ERROR=-4, Z_BUF_ERROR=-5, Z_DATA_ERROR=-3)\n", retval); fflush(stdout);
+		FREE(cbuf);
+		return 0;
+	}
+	a = (struct mmo_charstatus*)cbuf;
+	printf("[DEBUG] charload: decompressed char name='%s' id=%d level=%d hp=%d mp=%d\n", a->name, a->id, a->level, a->hp, a->mp); fflush(stdout);
+	printf("[DEBUG] charload: map=%d x=%d y=%d might=%d will=%d grace=%d\n", a->last_pos.m, a->last_pos.x, a->last_pos.y, a->basemight, a->basewill, a->basegrace); fflush(stdout);
 	/*if(!retval) {
 		a=(struct mmo_charstatus*)cbuf;
 
@@ -439,7 +481,7 @@ int intif_parse_checkonline(int fd) {
 
 	sd = map_id2sd(RFIFOL(fd, 2));
 
-	if (sd) { //User is not online, FORCE login to delete
+	if (sd && session[sd->fd]) { //User is not online, FORCE login to delete
 		session[sd->fd]->eof = 20;
 		//WFIFOW(fd,0)=0x3005;
 		//WFIFOL(fd,2)=RFIFOL(fd,2);
@@ -575,7 +617,6 @@ int intif_parse_userlist(int fd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -761,7 +802,6 @@ int intif_parse_readpost(int fd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -796,11 +836,11 @@ int intif_parse_readpost(int fd) {
 int intif_parse(int fd) {
 	int packet_len, cmd;
 
-	if (session[fd]->eof) {
+	if (!session[fd] || session[fd]->eof) {
 		add_log("Can't connect to Char Server.\n");
 		printf("Can't connect to Char Server.\n");
 		char_fd = 0;
-		session_eof(fd);
+		if (session[fd]) session_eof(fd);
 		return 0;
 	}
 

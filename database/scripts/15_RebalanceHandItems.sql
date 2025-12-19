@@ -1,6 +1,6 @@
 USE RTK;
 
-SET @script = '2020-10-01-12-55_RebalanceHandItems.sql';
+SET @script = '15_RebalanceHandItems.sql';
 
 DELIMITER $$
 

@@ -363,7 +363,6 @@ int client_transfer(USER* sd, int serverid, int m, int x, int y) {
 	int dest_port;
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -399,7 +398,6 @@ int client_transfer_test(USER* sd, int m, int x, int y) {
 	int len = 0;
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -434,7 +432,6 @@ int client_transfer_test(USER* sd, int m, int x, int y) {
 int client_send_board_questionnaire(USER* sd, struct board_questionaire* q, int count) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 	//Player(2):sendBoardQuestions("Defendant :","Name of Person who commited the crime.",2,"When :","When was the crime commited?",1)
@@ -483,7 +480,6 @@ int client_close_it(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -572,7 +568,6 @@ int client_add_to_killreg(USER* sd, int mob) {
 		if(sd->status.guide[x]) {
 		if (!session[sd->fd])
 		{
-			session[sd->fd]->eof = 8;
 			return 0;
 		}
 
@@ -596,7 +591,6 @@ int client_send_heartbeat(int id, int none) {
 	nullpo_ret(1, sd);
 
 	if (!session[sd->fd]) {
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -622,7 +616,6 @@ int pc_sendpong(int id, int none) {
 	if (sd) {
 		if (!session[sd->fd])
 		{
-			session[sd->fd]->eof = 8;
 			return 0;
 		}
 
@@ -644,7 +637,6 @@ int pc_sendpong(int id, int none) {
 int client_send_guide_specific(USER* sd, int guide) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -741,7 +733,6 @@ int client_send_towns(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -770,13 +761,11 @@ int client_send_towns(USER* sd) {
 int client_user_list(USER* sd) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -829,7 +818,6 @@ int client_object_look_sub2(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1053,7 +1041,6 @@ int client_object_look_specific(USER* sd, unsigned int id) {
 void client_send_timer(USER* sd, char type, unsigned int length) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1139,7 +1126,6 @@ int client_send_sub(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1375,7 +1361,6 @@ int client_npc_look_sub(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1639,7 +1624,6 @@ int client_mob_look_sub(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1912,7 +1896,6 @@ int client_char_look_sub(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -2325,7 +2308,6 @@ int client_char_specific(int sender, int id) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -2653,7 +2635,6 @@ int client_char_specific(int sender, int id) {
 int client_send_ack(USER* sd) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -2690,7 +2671,6 @@ int client_retrieve_profile(USER* sd) {
 int client_screensaver(USER* sd, int screen) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -2709,7 +2689,6 @@ int client_screensaver(USER* sd, int screen) {
 int client_send_time(USER* sd) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -2728,7 +2707,6 @@ int client_send_time(USER* sd) {
 int client_send_id(USER* sd) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -2750,7 +2728,6 @@ int client_send_id(USER* sd) {
 int client_send_weather(USER* sd) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -2769,7 +2746,6 @@ int client_send_map_info(USER* sd) {
 	//Map Title and Map X-Y
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -2857,7 +2833,6 @@ int client_send_xynoclick(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -2921,6 +2896,13 @@ int client_parsewalk(USER* sd) {
 	int def[2];
 	int subt[1];
 	int i = 0;
+
+	printf("[DEBUG] client_parsewalk: START for %s at (%d,%d) map=%d\n", sd->status.name, sd->bl.x, sd->bl.y, sd->bl.m); fflush(stdout);
+
+	if (!session[sd->fd]) {
+		printf("[DEBUG] client_parsewalk: session[sd->fd] is NULL, returning early\n"); fflush(stdout);
+		return 0;
+	}
 
 	subt[0] = 0;
 	def[0] = 0;
@@ -3030,7 +3012,6 @@ int client_parsewalk(USER* sd) {
 	if (!(sd->status.settingFlags & FLAG_FASTMOVE)) {
 		if (!session[sd->fd])
 		{
-			session[sd->fd]->eof = 8;
 			return 0;
 		}
 
@@ -3092,11 +3073,14 @@ int client_parsewalk(USER* sd) {
 
 	//moveblock = (sd->bl.x/BLOCK_SIZE != dx/BLOCK_SIZE || sd->bl.y/BLOCK_SIZE != dy/BLOCK_SIZE);
 
+	printf("[DEBUG] client_parsewalk: calling map_moveblock to (%d,%d)\n", dx, dy); fflush(stdout);
 	//if(moveblock)
 	map_moveblock(&sd->bl, dx, dy);
+	printf("[DEBUG] client_parsewalk: map_moveblock done\n"); fflush(stdout);
 	//if(moveblock) map_addblock(&sd->bl);
 
 	if (RFIFOB(sd->fd, 3) == 0x06) {
+		printf("[DEBUG] client_parsewalk: entering look update block (packet type 0x06)\n"); fflush(stdout);
 		client_send_map_data(sd, sd->bl.m, x0, y0, x1, y1, checksum);
 		//this is where all the "finding" code goes
 
@@ -3110,30 +3094,37 @@ int client_parsewalk(USER* sd) {
 		map_foreachinblock(client_npc_look_sub, sd->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_NPC, LOOK_GET, sd);
 		map_foreachinblock(client_mob_look_sub, sd->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_MOB, LOOK_GET, sd);
 		map_foreachinblock(client_char_look_sub, sd->bl.m, x0, y0, x0 + (x1 - 1), y0 + (y1 - 1), BL_PC, LOOK_SEND, sd);
+		printf("[DEBUG] client_parsewalk: look update block done\n"); fflush(stdout);
 	}
 
-	if (session[sd->fd]->eof)printf("%s eof set on.  19", sd->status.name);
+	if (session[sd->fd] && session[sd->fd]->eof)printf("%s eof set on.  19", sd->status.name);
 
+	printf("[DEBUG] client_parsewalk: starting equipment on_walk loop\n"); fflush(stdout);
 	for (i = 0; i < 14; i++) {
 		if (sd->status.equip[i].id > 0) {
 			sl_doscript_blargs(itemdb_yname(sd->status.equip[i].id), "on_walk", 1, &sd->bl);
 		}
 	}
 
+	printf("[DEBUG] client_parsewalk: starting spell on_walk_passive loop\n"); fflush(stdout);
 	for (i = 0; i < MAX_SPELLS; i++) {
 		if (sd->status.skill[i] > 0) {
 			sl_doscript_blargs(magicdb_yname(sd->status.skill[i]), "on_walk_passive", 1, &sd->bl);
 		}
 	}
 
+	printf("[DEBUG] client_parsewalk: starting aether on_walk_while_cast loop\n"); fflush(stdout);
 	for (i = 0; i < MAX_MAGIC_TIMERS; i++) {
 		if (sd->status.dura_aether[i].id > 0 && sd->status.dura_aether[i].duration > 0) {
 			sl_doscript_blargs(magicdb_yname(sd->status.dura_aether[i].id), "on_walk_while_cast", 1, &sd->bl);
 		}
 	}
 
+	printf("[DEBUG] client_parsewalk: calling onScriptedTile\n"); fflush(stdout);
 	sl_doscript_blargs("onScriptedTile", NULL, 1, &sd->bl);
+	printf("[DEBUG] client_parsewalk: onScriptedTile done, calling pc_runfloor_sub\n"); fflush(stdout);
 	pc_runfloor_sub(sd);
+	printf("[DEBUG] client_parsewalk: pc_runfloor_sub done\n"); fflush(stdout);
 	//map_foreachincell(pc_runfloor_sub,sd->bl.m,sd->bl.x,sd->bl.y,BL_NPC,sd,0,subt);
 	int fm = 0, fx = 0, fy = 0;
 	int zm = 0, zx = 0, zy = 0;
@@ -3179,6 +3170,7 @@ int client_parsewalk(USER* sd) {
 			return 0;
 		}
 
+		printf("[DEBUG] client_parsewalk: calling pc_warp to map=%d pos=(%d,%d)\n", zm, zx, zy); fflush(stdout);
 		pc_warp(sd, zm, zx, zy);
 		//sd->LastWalkTick = 0;
 	}
@@ -3186,6 +3178,7 @@ int client_parsewalk(USER* sd) {
 	//sd->canmove=0;
 	//sd->iswalking=0;
 
+	printf("[DEBUG] client_parsewalk: END for %s\n", sd->status.name); fflush(stdout);
 	return 0;
 }
 
@@ -4010,7 +4003,6 @@ int client_send_map_data(USER* sd, int m, int x0, int y0, int x1, int y1, unsign
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -4538,7 +4530,6 @@ int client_parsesay(USER* sd) {
 int client_destroy_old(USER* sd) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -4568,7 +4559,6 @@ int client_refreshnoclick(USER* sd)
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -4604,7 +4594,7 @@ int client_refreshnoclick(USER* sd)
 
 /* client_send_update_status, client_send_update_status2 moved to client_player.c */
 
-client_send_update_status_onkill(USER* sd) {
+int client_send_update_status_onkill(USER* sd) {
 	int tnl = client_get_level_tnl(sd);
 	int len = 0;
 	nullpo_ret(0, sd);
@@ -4612,7 +4602,6 @@ client_send_update_status_onkill(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -4646,7 +4635,7 @@ client_send_update_status_onkill(USER* sd) {
 
 /* client_get_level_tnl, client_get_xp_bar_percent moved to client_player.c */
 
-client_send_update_status_onequip(USER* sd) {
+int client_send_update_status_onequip(USER* sd) {
 	int tnl = client_get_level_tnl(sd);
 	int len = 0;
 	nullpo_ret(0, sd);
@@ -4654,7 +4643,6 @@ client_send_update_status_onequip(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -4710,7 +4698,7 @@ client_send_update_status_onequip(USER* sd) {
 	return 0;
 }
 
-client_send_update_status_onunequip(USER* sd) {
+int client_send_update_status_onunequip(USER* sd) {
 	int tnl = client_get_level_tnl(sd);
 	int len = 0;
 	nullpo_ret(0, sd);
@@ -4718,7 +4706,6 @@ client_send_update_status_onunequip(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -4788,7 +4775,6 @@ int client_send_magic(USER* sd, int pos) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -5007,7 +4993,6 @@ int client_inputseq(USER* sd, int id, char* dialog, char* dialog2, char* dialog3
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -5243,7 +5228,6 @@ int client_parsechangepos(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -5359,7 +5343,6 @@ int client_parsechangespell(USER* sd) {
 int client_remove_spell(USER* sd, int pos) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -6578,7 +6561,6 @@ int client_send_test(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -6615,7 +6597,6 @@ int client_show_boards(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -6842,7 +6823,6 @@ int client_find_mount(USER* sd) {
 /*int client_clan_bank_withdraw(USER *sd,struct item_data *items,int count) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -6922,7 +6902,6 @@ int client_map_select(USER* sd, char* wm, int* x0, int* y0, char** mname, unsign
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -7006,7 +6985,6 @@ int client_send_powerboard(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -7060,7 +7038,6 @@ int client_hunter_toggle(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 

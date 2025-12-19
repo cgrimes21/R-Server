@@ -1,0 +1,15 @@
+[2JRetroTK - Revision Unknown
+[Status]: Game state initialized with defaults.
+Map IP: 127.0.0.1
+Login IP: 127.0.0.1
+Neutral
+Koguryo
+Buya
+Nagnang
+Gogoon
+Vortex
+Configuration File (conf/map.conf) reading finished!
+Configuration File (conf/inter.conf) reading finished!
+Configuration File (conf/char.conf) reading finished!
+Language File (conf/lang.conf) reading finished!
+[Status]: Loading crypto configuration from 'conf/crypto.conf'

@@ -605,8 +605,16 @@ int make_listen_port(int port) {
 	FD_SET(fd, &readfds);
 
 	CALLOC(session[fd], struct socket_data, 1);
+	CALLOC(session[fd]->rdata, unsigned char, rfifo_size);
+	CALLOC(session[fd]->wdata, unsigned char, wfifo_size);
 
+	session[fd]->max_rdata = rfifo_size;
+	session[fd]->max_wdata = wfifo_size;
 	session[fd]->func_recv = connect_client;
+	session[fd]->func_send = send_from_fifo;
+	session[fd]->func_parse = default_func_parse;
+	session[fd]->func_timeout = default_func_timeout;
+	session[fd]->func_shutdown = default_func_shutdown;
 	session[fd]->rdata_tick = 0;
 	return fd;
 }
@@ -618,6 +626,17 @@ int make_connection(long ip, int port) {
 	int yes = 1; // reuse fix
 
 	fd = socket(AF_INET, SOCK_STREAM, 0);
+
+	if (fd < 0) {
+		perror("socket");
+		return -1;
+	}
+
+	if (fd >= FD_SETSIZE) {
+		printf("make_connection: fd %d >= FD_SETSIZE %d\n", fd, FD_SETSIZE);
+		close(fd);
+		return -1;
+	}
 
 	if (fd_max <= fd)
 		fd_max = fd + 1;
@@ -958,6 +977,14 @@ void do_socket(void) {
 	CALLOC(session[0], struct socket_data, 1);
 	CALLOC(session[0]->rdata, unsigned char, rfifo_size);
 	CALLOC(session[0]->wdata, unsigned char, wfifo_size);
+	// Initialize function pointers for session[0] to avoid NULL pointer calls
+	session[0]->max_rdata = rfifo_size;
+	session[0]->max_wdata = wfifo_size;
+	session[0]->func_recv = recv_to_fifo;
+	session[0]->func_send = send_from_fifo;
+	session[0]->func_parse = default_func_parse;
+	session[0]->func_timeout = default_func_timeout;
+	session[0]->func_shutdown = default_func_shutdown;
 }
 
 void Add_Throttle(struct sockaddr_in S)

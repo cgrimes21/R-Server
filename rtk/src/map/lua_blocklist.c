@@ -873,13 +873,24 @@ void lua_blocklist_extendproto(lua_type_class* class) {
 }
 
 void lua_blocklist_pushinst(lua_State* state, struct block_list* bl, void* param) {
+	printf("[DEBUG] lua_blocklist_pushinst: bl=%p\n", (void*)bl); fflush(stdout);
 	if (!bl) {
+		printf("[DEBUG] lua_blocklist_pushinst: bl is NULL, pushing nil\n"); fflush(stdout);
 		lua_pushnil(state);
 		return;
 	}
+	printf("[DEBUG] lua_blocklist_pushinst: bl->type=%d bl->id=%u bl->x=%d bl->y=%d bl->m=%d\n",
+		bl->type, bl->id, bl->x, bl->y, bl->m); fflush(stdout);
 	if (bl->type == BL_PC) {
 		USER* sd = map_id2sd(bl->id);
+		printf("[DEBUG] lua_blocklist_pushinst: BL_PC, sd=%p, pcl_type=%p\n", (void*)sd, (void*)&pcl_type); fflush(stdout);
+		if (!sd) {
+			printf("[DEBUG] lua_blocklist_pushinst: sd is NULL! Pushing nil instead\n"); fflush(stdout);
+			lua_pushnil(state);
+			return;
+		}
 		lua_type_pushinst(state, &pcl_type, sd, param);
+		printf("[DEBUG] lua_blocklist_pushinst: lua_type_pushinst returned for BL_PC\n"); fflush(stdout);
 	}
 	else if (bl->type == BL_MOB) {
 		MOB* mob = (MOB*)bl;

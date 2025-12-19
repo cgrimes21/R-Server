@@ -1,6 +1,6 @@
 USE RTK;
 
-SET @script = '2020-07-11-20-07_DoNotRequireAccountPassword.sql';
+SET @script = '07_FixRoosterGuardianSpawnTime.sql';
 
 DELIMITER $$
 
@@ -13,9 +13,9 @@ CREATE PROCEDURE sp(
 BEGIN
 	IF NOT EXISTS (SELECT * FROM MigrationHistory WHERE Script = scriptName) THEN
 		-- ----------------------------
-		-- Allow accounts to be created without passwords
+		-- Fix Rooster guardian spawn time
 		-- ----------------------------
-		ALTER TABLE `Accounts` MODIFY `AccountPassword` varchar(255) NOT NULL DEFAULT '';
+		UPDATE Mobs SET MobSpawnTime = 30 WHERE MobIdentifier = 'rooster_guardian';
 
 		INSERT INTO `MigrationHistory` (Script,Timestamp) VALUES (scriptName,NOW());
 	ELSE

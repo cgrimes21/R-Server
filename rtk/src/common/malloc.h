@@ -20,6 +20,7 @@
 #define aFree(p) free(p)
 #define STRDUP(p,file,line,func)	strdup(p)
 
+void* _realloc(void* ptr, size_t size, char* file, int line, char* func);
 #endif
 
 #if !defined(NO_MEMMGR) && !defined(USE_MEMMGR)

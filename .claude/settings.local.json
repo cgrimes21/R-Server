@@ -4,7 +4,10 @@
       "Bash(find:*)",
       "Bash(wc:*)",
       "Bash(wsl bash -c \"cd /mnt/d/RTK-Refactor-Claude/RTK-Server/rtk/src/map && gcc -c -DDEBUG -g3 -fno-stack-protector -ffast-math -Wall -Wno-sign-compare -DFD_SETSIZE=1024 -DNO_MEMMGR -DLOGGING_ENABLED -DUSE_MYSQL -I../common -I/usr/include/mysql -I/usr/include/lua5.1 -fsyntax-only clif_crypto.c clif_chat.c clif_visual.c clif_combat.c clif_inventory.c clif_npc.c clif_player.c 2>&1\")",
-      "Bash(wsl bash:*)"
+      "Bash(wsl bash:*)",
+      "Bash(printf:*)",
+      "Bash(cat:*)",
+      "Bash(git add:*)"
     ]
   }
 }

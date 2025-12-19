@@ -1,6 +1,6 @@
 USE RTK;
 
-SET @script = '2020-09-29-19-32_RebalanceShields.sql';
+SET @script = '12_RebalanceShields.sql';
 
 DELIMITER $$
 

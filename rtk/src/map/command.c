@@ -538,7 +538,7 @@ int command_ban(USER* sd, char* line, lua_State* state) {
 
 	USER* tsd = map_name2sd(name);
 
-	if (tsd) {
+	if (tsd && session[tsd->fd]) {
 		printf("Banning %s\n", name);
 		ipaddr = session[tsd->fd]->client_addr.sin_addr.s_addr;
 
@@ -893,7 +893,7 @@ int command_killall(USER* sd, char* line, lua_State* state) {
 	}
 
 	//int len = sprintf(buf,"All but GMs have been mass booted.");
-	if (!session[sd->fd]->eof)
+	if (session[sd->fd] && !session[sd->fd]->eof)
 		client_send_minitext(sd, "All but GMs have been mass booted.");
 
 	return 0;

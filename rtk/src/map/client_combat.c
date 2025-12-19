@@ -533,7 +533,6 @@ int client_send_mob_health_sub(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -563,7 +562,6 @@ int client_send_mob_health_sub_nosd(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -618,7 +616,6 @@ void client_send_selfbar(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return;
 	}
 
@@ -651,7 +648,6 @@ void client_send_groupbars(USER* sd, USER* tsd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return;
 	}
 
@@ -686,7 +682,6 @@ void client_send_mobbars(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return;
 	}
 
@@ -1130,7 +1125,6 @@ int client_send_duration(USER* sd, int id, int time, USER* tsd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1166,7 +1160,6 @@ int client_send_aether(USER* sd, int id, int time) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 

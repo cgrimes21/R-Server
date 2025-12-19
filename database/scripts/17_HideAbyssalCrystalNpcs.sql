@@ -1,6 +1,6 @@
 USE RTK;
 
-SET @script = '2020-07-15-21-20_FixRoosterGuardianSpawnTime.sql';
+SET @script = '17_HideAbyssalCrystalNpcs.sql';
 
 DELIMITER $$
 
@@ -12,11 +12,11 @@ CREATE PROCEDURE sp(
 
 BEGIN
 	IF NOT EXISTS (SELECT * FROM MigrationHistory WHERE Script = scriptName) THEN
-		-- ----------------------------
-		-- Fix Rooster guardian spawn time
-		-- ----------------------------
-		UPDATE Mobs SET MobSpawnTime = 30 WHERE MobIdentifier = 'rooster_guardian';
-
+		-- Move Abyssal crystals into an unused map to hide them without deleting
+		UPDATE NPCs0
+		SET NpcMapId = 1071, NpcX = 9, NpcY = 9
+		WHERE NpcId BETWEEN 364 AND 379;
+		
 		INSERT INTO `MigrationHistory` (Script,Timestamp) VALUES (scriptName,NOW());
 	ELSE
 		SELECT CONCAT(scriptName, ' was skipped because it is already present in the migration history.') AS '';

@@ -16,6 +16,11 @@ int check_connect_login(int ip, int port) {
 	if (login_fd <= 0 || session[login_fd] == NULL) {
 		printf("Attempt to connect to login-server...\n");
 		login_fd = make_connection(ip, port);
+		if (login_fd < 0) {
+			printf("Failed to create connection to login-server.\n");
+			login_fd = 0;  // Reset to trigger retry next time
+			return 0;
+		}
 		session[login_fd]->func_parse = logif_parse;
 		realloc_rfifo(login_fd, FIFOSIZE_SERVER, FIFOSIZE_SERVER);
 		WFIFOHEAD(login_fd, 69);

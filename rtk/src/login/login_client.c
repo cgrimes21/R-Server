@@ -76,7 +76,7 @@ int login_client_accept(int fd) {
 	}*/
 
 	char ip[30];
-	strcpy(ip, (char*)inet_ntoa(session[fd]->client_addr.sin_addr.s_addr));
+	strcpy(ip, inet_ntoa(session[fd]->client_addr.sin_addr));
 
 	banned = bannedIPCheck(ip);
 
@@ -362,7 +362,7 @@ int login_client_parse(int fd) {
 	sprintf(OutStr, "Packet (IP%u.%u.%u.%u L%i): ", CONVIP(session[fd]->client_addr.sin_addr.s_addr), len);
 
 	char ip[30];
-	strcpy(ip, (char*)inet_ntoa(session[fd]->client_addr.sin_addr.s_addr));
+	strcpy(ip, inet_ntoa(session[fd]->client_addr.sin_addr));
 
 	for (L = 0; L < len; L++)
 	{
@@ -392,6 +392,9 @@ int login_client_parse(int fd) {
 		return 0;
 
 	rtk_crypt(RFIFOP(fd, 0));
+
+	printf("[LOGIN] Decrypted packet cmd=0x%02X len=%d from %s\n", RFIFOB(fd, 3), len, ip);
+	fflush(stdout);
 
 	switch (RFIFOB(fd, 3)) {
 	case 0x00:
@@ -684,10 +687,14 @@ int login_client_parse(int fd) {
 		break;
 	default:
 		//rtk_crypt(RFIFOP(fd,0)); //reverse the encryption
-		printf("[LOGIN] Unknown Packet ID: %02X Packet from %s:\n", RFIFOB(fd, 3), (char*)inet_ntoa(session[fd]->client_addr.sin_addr.s_addr));
+		printf("[LOGIN] Unknown Packet ID: %02X Packet from %s:\n", RFIFOB(fd, 3), inet_ntoa(session[fd]->client_addr.sin_addr));
 		login_client_debug(RFIFOP(fd, 0), SWAP16(RFIFOW(fd, 1)));
 		break;
 	}
+
+	// Check if session was closed during packet handling (e.g., by intif_auth)
+	if (!session[fd])
+		return 0;
 
 	RFIFOSKIP(fd, len);
 	return 0;

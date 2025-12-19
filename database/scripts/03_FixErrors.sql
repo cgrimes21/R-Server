@@ -1,6 +1,6 @@
 USE RTK;
 
-SET @script = '2020-07-04-15-04_FixErrors.sql';
+SET @script = '03_FixErrors.sql';
 
 DELIMITER $$
 

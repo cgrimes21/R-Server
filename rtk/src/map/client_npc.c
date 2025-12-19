@@ -224,7 +224,6 @@ int client_script_message(USER* sd, int id, char* msg, int previous, int next) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -474,7 +473,6 @@ int client_script_menu(USER* sd, int id, char* dialog, char* menu[], int size) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -747,7 +745,6 @@ int client_script_menu_seq(USER* sd, int id, char* dialog, char* menu[], int siz
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1026,7 +1023,6 @@ int client_input_seq(USER* sd, int id, char* dialog, char* dialog2, char* dialog
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1093,7 +1089,6 @@ int client_buy_dialog(USER* sd, unsigned int id, char* dialog, struct item* item
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1374,7 +1369,6 @@ int client_sell_dialog(USER* sd, unsigned int id, char* dialog, int item[], int 
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -1570,7 +1564,6 @@ int client_input(USER* sd, int id, char* dialog, char* item) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 

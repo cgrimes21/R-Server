@@ -1047,7 +1047,6 @@ int pc_warp(USER* sd, int m, int x, int y) {
 
 		if (!session[sd->fd])
 		{
-			session[sd->fd]->eof = 20;
 			return 0;
 		}
 

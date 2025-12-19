@@ -1,6 +1,6 @@
 USE RTK;
 
-SET @script = '2020-10-12-09-29_InsertWaypointNpcs.sql';
+SET @script = '19_InsertWaypointNpcs.sql';
 
 DELIMITER $$
 

@@ -428,17 +428,27 @@ int mmo_char_fromdb(unsigned int id, struct mmo_charstatus* p, char* login_name)
 
 	//Update character name from login name
 	Sql_EscapeString(sql_handle, escape1, login_name);
-	Sql_Query(sql_handle, "UPDATE `Character` SET `ChaName` = '%s' WHERE `ChaId` = '%u'", escape1, id);
+	printf("[DEBUG-DB] mmo_char_fromdb: UPDATE name to '%s' for id=%u\n", escape1, id); fflush(stdout);
+	if (SQL_ERROR == Sql_Query(sql_handle, "UPDATE `Character` SET `ChaName` = '%s' WHERE `ChaId` = '%u'", escape1, id)) {
+		printf("[DEBUG-DB] mmo_char_fromdb: UPDATE FAILED!\n"); fflush(stdout);
+		Sql_ShowDebug(sql_handle);
+	}
 
 	//Char status read
-	if (SQL_ERROR == SqlStmt_Prepare(stmt, "SELECT `ChaName`, `ChaClnId`, `ChaClanTitle`, `ChaTitle`, `ChaF1Name`, `ChaLevel`, `ChaPthId`, `ChaMark`, " //0-7
+	printf("[DEBUG-DB] mmo_char_fromdb: preparing SELECT for id=%u\n", id); fflush(stdout);
+	// Format the query manually to avoid varargs bug
+	char query_buf[2048];
+	snprintf(query_buf, sizeof(query_buf),
+		"SELECT `ChaName`, `ChaClnId`, `ChaClanTitle`, `ChaTitle`, `ChaF1Name`, `ChaLevel`, `ChaPthId`, `ChaMark`, " //0-7
 		"`ChaTotem`, `ChaKarma`, `ChaCurrentVita`, `ChaBaseVita`, `ChaCurrentMana`, `ChaBaseMana`, `ChaExperience`, `ChaGold`, `ChaSex`, "//8-16
 		"`ChaNation`, `ChaFace`, `ChaHairColor`, `ChaArmorColor`, `ChaMapId`, `ChaX`, `ChaY`, `ChaSide`, `ChaState`, `ChaHair`, `ChaFaceColor`, " //17-27
 		"`ChaSkinColor`, `ChaPartner`,`ChaClanChat`,`ChaPathChat`, `ChaNoviceChat`, `ChaSettings`,`ChaGMLevel`,`ChaDisguise`,`ChaDisguiseColor`, `ChaMaximumBankSlots`, " //28-36
 		"`ChaBankGold`, `ChaMaximumInventory`, `ChaPK`, `ChaKilledBy`, `ChaKillsPK`, `ChaPKDuration`, `ChaMuted`, `ChaHeroes`, `ChaTier`, " //37-46
 		"`ChaExperienceSoldMagic`, `ChaExperienceSoldHealth`, `ChaExperienceSoldStats`, `ChaBaseMight`, `ChaBaseWill`, `ChaBaseGrace`, "
 		"`ChaBaseArmor`, `ChaMiniMapToggle`, `ChaLastIP`, `ChaAFKMessage`, `ChaTutor`, `ChaAlignment`, `ChaProfileVitaStats`,`ChaProfileEquipList`, "
-		"`ChaProfileLegends`, `ChaProfileSpells`, `ChaProfileInventory`, `ChaProfileBankItems`, `ChaPthRank`, `ChaClnRank` FROM `Character` WHERE `ChaId` = '%u' LIMIT 1", id) //47
+		"`ChaProfileLegends`, `ChaProfileSpells`, `ChaProfileInventory`, `ChaProfileBankItems`, `ChaPthRank`, `ChaClnRank` FROM `Character` WHERE `ChaId` = '%u' LIMIT 1", id); //47
+	printf("[DEBUG-DB] Query WHERE: WHERE `ChaId` = '%u' LIMIT 1\n", id); fflush(stdout);
+	if (SQL_ERROR == SqlStmt_PrepareStr(stmt, query_buf) //47
 
 		|| SQL_ERROR == SqlStmt_Execute(stmt)
 		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 0, SQLDT_STRING, &a.name, sizeof(a.name), NULL, NULL)
@@ -510,22 +520,28 @@ int mmo_char_fromdb(unsigned int id, struct mmo_charstatus* p, char* login_name)
 		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 66, SQLDT_UCHAR, &a.clanRank, 0, NULL, NULL))
 
 	{
+		printf("[DEBUG-DB] mmo_char_fromdb: Prepare/Execute/BindColumn FAILED!\n"); fflush(stdout);
 		SqlStmt_ShowDebug(stmt);
 		SqlStmt_Free(stmt);
 		p->id = 0;
 		return -1;
 	}
+	printf("[DEBUG-DB] mmo_char_fromdb: Prepare/Execute/BindColumn OK, numrows=%lld\n", (long long)SqlStmt_NumRows(stmt)); fflush(stdout);
 
 	if (SQL_SUCCESS != SqlStmt_NextRow(stmt))
 	{
+		printf("[DEBUG-DB] mmo_char_fromdb: NextRow FAILED for id=%u\n", id); fflush(stdout);
 		SqlStmt_Free(stmt);
 		p->id = 0;
 		return -1;
 	}
+	printf("[DEBUG-DB] mmo_char_fromdb: NextRow OK, a.name='%s' a.level=%d\n", a.name, a.level); fflush(stdout);
 	memcpy(p, &a, sizeof(a));
 
 	p->id = id;
+	printf("[DEBUG-DB] mmo_char_fromdb: comparing a.name='%s' with login_name='%s'\n", a.name, login_name); fflush(stdout);
 	if (strcmpi(a.name, login_name)) {
+		printf("[DEBUG-DB] mmo_char_fromdb: NAME MISMATCH! Returning error.\n"); fflush(stdout);
 		SqlStmt_Free(stmt);
 		p->id = 0;
 		return -1;

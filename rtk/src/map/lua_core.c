@@ -591,7 +591,6 @@ int sl_throw(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -2882,34 +2881,53 @@ int sl_async(lua_State* state) {
 }
 
 int lua_do_script_stackargs(char* root, char* method, int nargs) {
+	printf("[DEBUG] lua_do_script_stackargs: root='%s' method='%s' nargs=%d\n",
+		root ? root : "NULL", method ? method : "NULL", nargs); fflush(stdout);
 	int argsindex = lua_gettop(lua_gstate) - (nargs - 1), errhandler, i;
 	lua_getglobal(lua_gstate, "_errhandler");
 	errhandler = lua_gettop(lua_gstate);
+	printf("[DEBUG] lua_do_script_stackargs: getting global '%s'\n", root ? root : "NULL"); fflush(stdout);
 	lua_getglobal(lua_gstate, root);
+	printf("[DEBUG] lua_do_script_stackargs: got global, isnil=%d istable=%d isfunction=%d\n",
+		lua_isnil(lua_gstate, -1), lua_istable(lua_gstate, -1), lua_isfunction(lua_gstate, -1)); fflush(stdout);
 	if (lua_isnil(lua_gstate, -1)) {
 		lua_pop(lua_gstate, 2 + nargs); // pop _errhandler, the table, and the args
+		printf("[DEBUG] lua_do_script_stackargs: global was nil, returning 0\n"); fflush(stdout);
 		return 0;
 	}
-	if (lua_istable(lua_gstate, -1)) {
+	if (lua_istable(lua_gstate, -1) && method != NULL) {
+		printf("[DEBUG] lua_do_script_stackargs: getting method '%s' from table\n", method); fflush(stdout);
 		lua_getfield(lua_gstate, -1, method);
 		lua_replace(lua_gstate, -2); // essentially remove the table leaving only the field
 	}
 	if (lua_isnil(lua_gstate, -1)) {
 		lua_pop(lua_gstate, 2 + nargs); // pop _errhandler, the field, and the args
+		printf("[DEBUG] lua_do_script_stackargs: method was nil, returning 0\n"); fflush(stdout);
 		return 0;
 	}
+	printf("[DEBUG] lua_do_script_stackargs: about to call lua_pcall\n"); fflush(stdout);
 	// push copies of the arguments onto the stack
-	for (i = 0; i < nargs; i++)
+	for (i = 0; i < nargs; i++) {
+		printf("[DEBUG] lua_do_script_stackargs: pushing arg %d from index %d, type=%d\n",
+			i, argsindex + i, lua_type(lua_gstate, argsindex + i)); fflush(stdout);
 		lua_pushvalue(lua_gstate, argsindex + i);
-	if (lua_pcall(lua_gstate, nargs, 0, errhandler) != 0) {
+	}
+	printf("[DEBUG] lua_do_script_stackargs: calling lua_pcall now, stack_top=%d\n", lua_gettop(lua_gstate)); fflush(stdout);
+	int pcall_result = lua_pcall(lua_gstate, nargs, 0, errhandler);
+	printf("[DEBUG] lua_do_script_stackargs: lua_pcall returned %d\n", pcall_result); fflush(stdout);
+	if (pcall_result != 0) {
+		printf("[DEBUG] lua_do_script_stackargs: lua_pcall ERROR: %s\n", lua_tostring(lua_gstate, -1)); fflush(stdout);
 		//sl_err_print(lua_gstate);
 		lua_pop(lua_gstate, 1); // pop the error string
 	}
 	lua_pop(lua_gstate, nargs + 1); // pop the original arguments, and _errhandler
+	printf("[DEBUG] lua_do_script_stackargs: returning 1\n"); fflush(stdout);
 	return 1;
 }
 int lua_do_script_blargs(char* root, char* method, int nargs, ...) {
 	int i;
+	printf("[DEBUG] lua_do_script_blargs: root='%s' method='%s' nargs=%d\n",
+		root ? root : "NULL", method ? method : "NULL", nargs); fflush(stdout);
 	if (!lua_checkstack(lua_gstate, 100)) {
 		printf("Lua - Min stack requirements not met.\n");
 
@@ -2919,10 +2937,13 @@ int lua_do_script_blargs(char* root, char* method, int nargs, ...) {
 	va_start(argp, nargs);
 	for (i = 0; i < nargs; i++) {
 		struct block_list* bl = va_arg(argp, struct block_list*);
+		printf("[DEBUG] lua_do_script_blargs: pushing bl arg %d: bl=%p\n", i, (void*)bl); fflush(stdout);
 		lua_blocklist_pushinst(lua_gstate, bl, 0);
+		printf("[DEBUG] lua_do_script_blargs: lua_blocklist_pushinst returned for arg %d\n", i); fflush(stdout);
 	}
 	va_end(argp);
 
+	printf("[DEBUG] lua_do_script_blargs: calling lua_do_script_stackargs\n"); fflush(stdout);
 	return lua_do_script_stackargs(root, method, nargs);
 }
 
@@ -5859,7 +5880,7 @@ int pcl_setAccountBan(lua_State* state, USER* sd) {
 		char name[16];
 		memcpy(name, sd->status.name, 16);
 
-		if (banned == 1) session[sd->fd]->eof = 1;
+		if (banned == 1 && session[sd->fd]) session[sd->fd]->eof = 1;
 
 		if (SQL_ERROR == Sql_Query(sql_handle, "UPDATE `Character` SET ChaBanned = '%i' WHERE `ChaName` = '%s'", banned, name)) {
 			SqlStmt_ShowDebug(sql_handle);
@@ -5902,7 +5923,7 @@ int pcl_setAccountBan(lua_State* state, USER* sd) {
 			for (int i = 0; i < sizeof(ChaIds); i++) {	// disconnect all now banned chars
 				if (ChaIds[i] > 0) {
 					USER* tsd = map_id2sd(ChaIds[i]);
-					if (tsd != NULL) session[tsd->fd]->eof = 1;
+					if (tsd != NULL && session[tsd->fd]) session[tsd->fd]->eof = 1;
 				}
 			}
 		}
@@ -9828,7 +9849,6 @@ int pcl_testpacket(lua_State* state, USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 

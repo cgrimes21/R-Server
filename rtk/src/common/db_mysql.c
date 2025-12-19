@@ -1,6 +1,7 @@
 // Copyright (c) Athena Dev Teams - Licensed under GNU GPL
 // For more information, see LICENCE in the main folder
 
+#include <stdio.h>
 #include "../common/cbasetypes.h"
 #include "../common/malloc.h"
 #include "../common/showmsg.h"
@@ -570,6 +571,16 @@ int SqlStmt_PrepareV(SqlStmt* self, const char* query, va_list args)
 	SqlStmt_FreeResult(self);
 	StringBuf_Clear(&self->buf);
 	StringBuf_Vprintf(&self->buf, query, args);
+
+	// Debug: print the query WHERE clause
+	const char* q = StringBuf_Value(&self->buf);
+	size_t qlen = StringBuf_Length(&self->buf);
+	if (strstr(q, "Character") && qlen > 200) {
+		const char* where = strstr(q, "WHERE");
+		if (where) {
+			printf("[DEBUG-SQL] WHERE clause: %s\n", where); fflush(stdout);
+		}
+	}
 
 	if (mysql_stmt_prepare(self->stmt, StringBuf_Value(&self->buf), (unsigned long)StringBuf_Length(&self->buf)))
 	{

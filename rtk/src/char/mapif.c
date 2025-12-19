@@ -181,17 +181,22 @@ int mapif_parse_login(int fd, int id) {
 
 ///Parse Request of Character to Map Server
 int mapif_parse_requestchar(int fd) {
-	unsigned int ulen, clen, retval;
+	unsigned int ulen, retval;
+	unsigned long clen;  // Must be unsigned long for zlib
 	char* cbuf;
 	ulen = sizeof(struct mmo_charstatus);
 	clen = compressBound(ulen);
+	printf("[DEBUG-CHAR] requestchar: client_fd=%d char_id=%d struct_size=%u\n", RFIFOW(fd, 2), RFIFOL(fd, 4), ulen); fflush(stdout);
 	memset(char_dat, 0, sizeof(struct mmo_charstatus));
 	mmo_char_fromdb(RFIFOL(fd, 4), char_dat, RFIFOP(fd, 8));
+	printf("[DEBUG-CHAR] requestchar: loaded char name='%s' id=%d map=%d x=%d y=%d\n", char_dat->name, char_dat->id, char_dat->last_pos.m, char_dat->last_pos.x, char_dat->last_pos.y); fflush(stdout);
 
 	CALLOC(cbuf, char, clen);
-	retval = compress(cbuf, &clen, (char*)char_dat, ulen);
+	retval = compress((Bytef*)cbuf, &clen, (Bytef*)char_dat, ulen);
+	printf("[DEBUG-CHAR] requestchar: compress retval=%d compressed_len=%lu\n", retval, clen); fflush(stdout);
 
 	if (retval) {
+		printf("[DEBUG-CHAR] requestchar: COMPRESSION FAILED!\n"); fflush(stdout);
 		FREE(cbuf);
 		return 0;
 	}
@@ -203,6 +208,7 @@ int mapif_parse_requestchar(int fd) {
 
 	memcpy(WFIFOP(fd, 8), cbuf, clen);
 	WFIFOSET(fd, clen + 8);
+	printf("[DEBUG-CHAR] requestchar: sent packet len=%lu to map server\n", clen + 8); fflush(stdout);
 	FREE(cbuf);
 
 	return 0;

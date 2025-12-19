@@ -173,7 +173,6 @@ int nmail_sendmessage(USER* sd, char* message, int other, int type) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -733,15 +732,15 @@ int map_foreachinblockva(int (*func)(struct block_list*, va_list), int m, int x0
 	if (blockcount >= BL_LIST_MAX)
 		printf("map_foreachinarea: block count too many!\n");
 
-	for (i = 0; i < blockcount; i++)
-		if (bl_list[i]->prev)	// �L?���ǂ����`�F�b�N
-			returnCount += func(bl_list[i], ap);
+	for (i = 0; i < blockcount; i++) {
+		if (bl_list[i]->prev) {
+			va_list ap_copy;
+			va_copy(ap_copy, ap);
+			returnCount += func(bl_list[i], ap_copy);
+			va_end(ap_copy);
+		}
+	}
 
-	/*for (i = blockcount; i >= 0; i--)
-		if (bl_list[i]->prev)
-			returnCount += func(bl_list[i],ap);*/
-
-			//bl_list_count = blockcount;
 	return returnCount;
 }
 
@@ -973,9 +972,14 @@ int map_respawnmobs(int (*func)(struct block_list*, va_list), int m, int type, v
 	if (blockcount >= BL_LIST_MAX)
 		printf("map_foreachinarea: block count too many!\n");
 
-	for (i = 0; i < blockcount; i++)
-		if (bl_list[i]->prev)	// �L?���ǂ����`�F�b�N
-			returnCount += func(bl_list[i], ap);
+	for (i = 0; i < blockcount; i++) {
+		if (bl_list[i]->prev) {
+			va_list ap_copy;
+			va_copy(ap_copy, ap);
+			returnCount += func(bl_list[i], ap_copy);
+			va_end(ap_copy);
+		}
+	}
 
 	return returnCount;
 }
@@ -1085,6 +1089,7 @@ int map_registrysave(int m, int i) {
 
 //map data (title,id,and sound) is readed from configuration file
 int map_read() {//int id, const char *title, char bgm, int pvp, int spell, unsigned short light, unsigned short weather, unsigned int sweeptime, unsigned char cantalk, unsigned char showghosts, unsigned char region, unsigned char indoor, unsigned char warpout, const char *map_file) {
+	printf("[DEBUG] map_read: entering function\n"); fflush(stdout);
 	unsigned short buff;
 	unsigned int pos = 0;
 	unsigned int i, id, sweeptime;
@@ -1097,16 +1102,30 @@ int map_read() {//int id, const char *title, char bgm, int pvp, int spell, unsig
 	char title[64], mapfile[1024], mappath[1024];
 	char maprejectmsg[64];
 
+	printf("[DEBUG] map_read: calling SqlStmt_Malloc, sql_handle=%p\n", (void*)sql_handle); fflush(stdout);
 	SqlStmt* stmt = SqlStmt_Malloc(sql_handle);
 	FILE* fp;
 	//struct map_src_list *i = NULL;
+	printf("[DEBUG] map_read: SqlStmt_Malloc returned stmt=%p\n", (void*)stmt); fflush(stdout);
 	if (stmt == NULL) {
+		printf("[DEBUG] map_read: stmt is NULL, showing debug\n"); fflush(stdout);
 		SqlStmt_ShowDebug(stmt);
 		return 0;
 	}
 
-	if (SQL_ERROR == SqlStmt_Prepare(stmt, "SELECT `MapId`, `MapName`, `MapBGM`, `MapBGMType`, `MapPvP`, `MapSpells`, `MapLight`, `MapWeather`, `MapSweepTime`, `MapChat`, `MapGhosts`, `MapRegion`, `MapIndoor`, `MapWarpout`, `MapBind`, `MapFile`, `MapReqLvl`, `MapReqPath`, `MapReqMark`, `MapCanSummon`, `MapReqVita`, `MapReqMana`, `MapLvlMax`, `MapVitaMax`, `MapManaMax`, `MapRejectMsg`, `MapCanUse`, `MapCanEat`, `MapCanSmoke`, `MapCanMount`, `MapCanGroup`, `MapCanEquip` FROM `Maps` WHERE `MapServer` = '%d' ORDER BY `MapId`", serverid)
-		|| SQL_ERROR == SqlStmt_Execute(stmt)
+	printf("[DEBUG] map_read: preparing SQL query for serverid=%d\n", serverid); fflush(stdout);
+	int sql_result;
+	sql_result = SqlStmt_Prepare(stmt, "SELECT `MapId`, `MapName`, `MapBGM`, `MapBGMType`, `MapPvP`, `MapSpells`, `MapLight`, `MapWeather`, `MapSweepTime`, `MapChat`, `MapGhosts`, `MapRegion`, `MapIndoor`, `MapWarpout`, `MapBind`, `MapFile`, `MapReqLvl`, `MapReqPath`, `MapReqMark`, `MapCanSummon`, `MapReqVita`, `MapReqMana`, `MapLvlMax`, `MapVitaMax`, `MapManaMax`, `MapRejectMsg`, `MapCanUse`, `MapCanEat`, `MapCanSmoke`, `MapCanMount`, `MapCanGroup`, `MapCanEquip` FROM `Maps` WHERE `MapServer` = '%d' ORDER BY `MapId`", serverid);
+	printf("[DEBUG] map_read: SqlStmt_Prepare returned %d\n", sql_result); fflush(stdout);
+	if (sql_result == SQL_ERROR) {
+		printf("[DEBUG] map_read: SqlStmt_Prepare FAILED\n"); fflush(stdout);
+		SqlStmt_ShowDebug(stmt);
+		SqlStmt_Free(stmt);
+		return 0;
+	}
+	sql_result = SqlStmt_Execute(stmt);
+	printf("[DEBUG] map_read: SqlStmt_Execute returned %d\n", sql_result); fflush(stdout);
+	if (sql_result == SQL_ERROR
 		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 0, SQLDT_UINT, &id, 0, NULL, NULL)
 		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 1, SQLDT_STRING, &title, sizeof(title), NULL, NULL)
 		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 2, SQLDT_USHORT, &bgm, 0, NULL, NULL)
@@ -1144,10 +1163,14 @@ int map_read() {//int id, const char *title, char bgm, int pvp, int spell, unsig
 		return 0;
 	}
 
+	printf("[DEBUG] map_read: bind columns succeeded, getting row count\n"); fflush(stdout);
 	map_n = SqlStmt_NumRows(stmt);
+	printf("[DEBUG] map_read: map_n=%d, allocating map data\n", map_n); fflush(stdout);
 	CALLOC(map, struct map_data, 65535);
+	printf("[DEBUG] map_read: map allocated at %p, starting loop\n", (void*)map); fflush(stdout);
 
 	for (i = 0; i < map_n && SQL_SUCCESS == SqlStmt_NextRow(stmt); i++) {
+		printf("[DEBUG] map_read: processing row %d, mapfile=%s\n", i, mapfile); fflush(stdout);
 		sprintf(mappath, "../rtkmaps/Accepted/%s", mapfile);
 		fp = fopen(mappath, "rb");
 
@@ -1847,7 +1870,9 @@ int do_init(int argc, char** argv) {
 	//sql_init();
 	uptime();
 	guidedb_init();
+	printf("[DEBUG] About to call map_read()\n"); fflush(stdout);
 	map_read();
+	printf("[DEBUG] map_read() returned\n"); fflush(stdout);
 	map_initblock();
 	map_initiddb();
 	//script_init();

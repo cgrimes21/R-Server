@@ -74,16 +74,28 @@ int lua_type_mtgc(lua_State* state) {
  * @param param Optional parameter for init
  */
 void lua_type_pushinst(lua_State* state, lua_type_class* type, void* self, void* param) {
+	printf("[DEBUG] lua_type_pushinst: type=%p self=%p param=%p\n", (void*)type, self, param); fflush(stdout);
+	printf("[DEBUG] lua_type_pushinst: type->name=%s type->protoref=%d\n",
+		type ? (type->name ? type->name : "NULL") : "NULL_TYPE",
+		type ? type->protoref : -999); fflush(stdout);
 	lua_type_inst* inst = lua_newuserdata(state, sizeof(lua_type_inst));
+	printf("[DEBUG] lua_type_pushinst: lua_newuserdata returned inst=%p\n", (void*)inst); fflush(stdout);
 	inst->self = self;
 	inst->type = type;
+	printf("[DEBUG] lua_type_pushinst: calling sl_pushref with mtref=%d\n", lua_type_mtref); fflush(stdout);
 	sl_pushref(state, lua_type_mtref); /* set the metatable */
+	printf("[DEBUG] lua_type_pushinst: sl_pushref done, calling lua_setmetatable\n"); fflush(stdout);
 	lua_setmetatable(state, -2);
+	printf("[DEBUG] lua_type_pushinst: creating data table\n"); fflush(stdout);
 	lua_newtable(state); /* create a new data table and store a ref */
 	inst->dataref = luaL_ref(state, LUA_REGISTRYINDEX);
+	printf("[DEBUG] lua_type_pushinst: dataref=%d, checking init\n", inst->dataref); fflush(stdout);
 	if (type->init && inst->self) {
+		printf("[DEBUG] lua_type_pushinst: calling type->init\n"); fflush(stdout);
 		type->init(state, inst->self, inst->dataref, param);
+		printf("[DEBUG] lua_type_pushinst: type->init returned\n"); fflush(stdout);
 	}
+	printf("[DEBUG] lua_type_pushinst: done\n"); fflush(stdout);
 }
 
 /**

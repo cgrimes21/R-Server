@@ -1,6 +1,6 @@
 USE RTK;
 
-SET @script = '2020-10-19-10-01_DuplicateHorseSentries.sql';
+SET @script = '20_DuplicateHorseSentries.sql';
 
 DELIMITER $$
 

@@ -40,7 +40,6 @@ int client_send_animation_xy(struct block_list* bl, va_list ap) {
 
 	if (!session[src->fd])
 	{
-		session[src->fd]->eof = 8;
 		return 0;
 	}
 
@@ -70,7 +69,6 @@ int client_send_animation(struct block_list* bl, va_list ap) {
 	if (sd->status.settingFlags & FLAG_MAGIC) {
 		if (!session[sd->fd])
 		{
-			session[sd->fd]->eof = 8;
 			return 0;
 		}
 
@@ -90,7 +88,6 @@ int client_send_animation(struct block_list* bl, va_list ap) {
 int client_animation(USER* src, USER* sd, int animation, int duration) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -336,7 +333,6 @@ int client_mob_move(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -362,7 +358,6 @@ int client_mob_look_start_func(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -396,7 +391,6 @@ int client_mob_look_start(USER* sd) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -548,7 +542,6 @@ int client_send_destroy(struct block_list* bl, va_list ap) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 

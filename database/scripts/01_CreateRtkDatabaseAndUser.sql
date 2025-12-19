@@ -1,8 +1,17 @@
+-- ============================================================================
+-- WARNING: This script uses hardcoded credentials!
+--
+-- RECOMMENDED: Use ../setup.sh instead, which reads from ../db.conf:
+--   cd database && ./setup.sh init
+--
+-- Only run this script directly if you want the default credentials.
+-- ============================================================================
+
 CREATE DATABASE IF NOT EXISTS `RTK`;
 
 USE `RTK`;
 
-SET @script = '2020-07-04-14-45_CreateRtkDatabaseAndUser.sql';
+SET @script = '01_CreateRtkDatabaseAndUser.sql';
 
 DELIMITER $$
 

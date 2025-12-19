@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <sys/time.h>  /* gettimeofday, struct timeval */
+#include <time.h>      /* localtime, strftime */
 #include "../common/malloc.h"
 #include "../common/showmsg.h"
 

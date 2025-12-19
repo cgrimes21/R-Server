@@ -1,6 +1,6 @@
 USE RTK;
 
-SET @script = '2020-10-06-10-59_HideAbyssalCrystalNpcs.sql';
+SET @script = '05_DoNotRequireAccountPassword.sql';
 
 DELIMITER $$
 
@@ -12,11 +12,11 @@ CREATE PROCEDURE sp(
 
 BEGIN
 	IF NOT EXISTS (SELECT * FROM MigrationHistory WHERE Script = scriptName) THEN
-		-- Move Abyssal crystals into an unused map to hide them without deleting
-		UPDATE NPCs0
-		SET NpcMapId = 1071, NpcX = 9, NpcY = 9
-		WHERE NpcId BETWEEN 364 AND 379;
-		
+		-- ----------------------------
+		-- Allow accounts to be created without passwords
+		-- ----------------------------
+		ALTER TABLE `Accounts` MODIFY `AccountPassword` varchar(255) NOT NULL DEFAULT '';
+
 		INSERT INTO `MigrationHistory` (Script,Timestamp) VALUES (scriptName,NOW());
 	ELSE
 		SELECT CONCAT(scriptName, ' was skipped because it is already present in the migration history.') AS '';

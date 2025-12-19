@@ -1,6 +1,6 @@
 USE RTK;
 
-SET @script = '2020-08-13-12-35_FixNpcIdentifierCasing.sql';
+SET @script = '09_FixNpcIdentifierCasing.sql';
 
 DELIMITER $$
 

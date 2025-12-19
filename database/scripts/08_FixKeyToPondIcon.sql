@@ -1,6 +1,6 @@
 USE RTK;
 
-SET @script = '2020-07-16-11-11_FixKeyToPondIcon.sql';
+SET @script = '08_FixKeyToPondIcon.sql';
 
 DELIMITER $$
 

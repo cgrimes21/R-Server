@@ -165,7 +165,6 @@ int client_send_del_item(USER* sd, int num, int type) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -232,7 +231,6 @@ int client_send_add_item(USER* sd, int num) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -322,7 +320,6 @@ int client_equip_item(USER* sd, int id) {
 
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
@@ -430,7 +427,6 @@ int client_send_equip(USER* sd, int id) {
 int client_unequip_item(USER* sd, int spot) {
 	if (!session[sd->fd])
 	{
-		session[sd->fd]->eof = 8;
 		return 0;
 	}
 
